@@ -5,970 +5,461 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>文字隐写术</title>
 <style>
-    :root{
-        --bg:#F5F5F7;
-        --card:#FFFFFF;
-        --card-2:#FAFAFC;
-        --fg:#1D1D1F;
-        --fg-2:#424245;
-        --muted:#86868B;
-        --placeholder:rgba(60,60,67,.32);
-        --sep:rgba(60,60,67,.10);
-        --sep-2:rgba(60,60,67,.055);
-        --accent:#0071E3;
-        --accent-2:#0A84FF;
-        --accent-press:#0062CC;
-        --accent-soft:rgba(0,113,227,.10);
-        --ok:#34C759;
-        --ok-text:#248A3D;
-        --warn:#FF9500;
-        --warn-text:#C86A00;
-        --danger:#FF3B30;
-        --danger-text:#D70015;
-        --seg-bg:rgba(120,120,128,.10);
-        --seg-slider:#FFFFFF;
-        --chev:#C7C7CC;
-        --toast-bg:rgba(28,28,30,.92);
-        --ring:0 0 0 3.5px var(--accent-soft);
-        --radius:14px;
-        --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
-        --spring:cubic-bezier(.32,1.35,.45,1);
-        --ios:cubic-bezier(.32,.72,0,1);
-    }
-    @media(prefers-color-scheme:dark){
-        :root{
-            --bg:#000000;
-            --card:#1C1C1E;
-            --card-2:#242426;
-            --fg:#F5F5F7;
-            --fg-2:#D1D1D6;
-            --muted:#98989D;
-            --placeholder:rgba(235,235,245,.32);
-            --sep:rgba(84,84,88,.55);
-            --sep-2:rgba(84,84,88,.28);
-            --accent:#0A84FF;
-            --accent-2:#3C9CFF;
-            --accent-press:#409CFF;
-            --accent-soft:rgba(10,132,255,.16);
-            --ok:#30D158;
-            --ok-text:#30D158;
-            --warn:#FF9F0A;
-            --warn-text:#FFB340;
-            --danger:#FF453A;
-            --danger-text:#FF453A;
-            --seg-bg:rgba(118,118,128,.24);
-            --seg-slider:#48484A;
-            --chev:#5A5A5E;
-            --toast-bg:rgba(58,58,60,.94);
-        }
-    }
-    *{margin:0;padding:0;box-sizing:border-box}
-    html{
-        -webkit-text-size-adjust:100%;
-        background:var(--bg);
-    }
-    body{
-        font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
-        background:var(--bg);
-        color:var(--fg);
-        font-size:15px;line-height:1.5;
-        min-height:100vh;
-        -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
-        -webkit-tap-highlight-color:transparent;
-        overflow-x:hidden;
-    }
-    ::-webkit-scrollbar{width:6px;height:6px}
-    ::-webkit-scrollbar-thumb{background:rgba(120,120,128,.28);border-radius:3px}
-    ::-webkit-scrollbar-track{background:transparent}
-
-    .app{
-        max-width:520px;margin:0 auto;
-        padding:0 16px 24px;
-        min-height:100vh;
-        background:var(--bg);
-    }
-
-    .header{
-        padding:calc(30px + env(safe-area-inset-top)) 4px 18px;
-        animation:fadeUp .55s .02s both;
-        display:flex;align-items:center;gap:14px;
-    }
-    .brand-icon{
-        width:46px;height:46px;flex-shrink:0;
-        border-radius:13px;
-        background:linear-gradient(135deg, var(--accent-2), var(--accent));
-        display:flex;align-items:center;justify-content:center;
-        color:#FFF;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
-    }
-    .brand-icon svg{width:24px;height:24px}
-    .brand-text{min-width:0;flex:1}
-    .brand-text h1{
-        font-size:25px;font-weight:800;letter-spacing:-.9px;line-height:1.15;
-        background:linear-gradient(180deg, var(--fg) 20%, var(--fg-2));
-        -webkit-background-clip:text;background-clip:text;
-        -webkit-text-fill-color:transparent;
-        display:inline-block;
-    }
-    .brand-text p{font-size:12.5px;color:var(--muted);margin-top:2px;letter-spacing:-.1px}
-    @supports not (-webkit-background-clip:text){
-        .brand-text h1{background:none;-webkit-text-fill-color:var(--fg);color:var(--fg)}
-    }
-
-    .seg{
-        position:relative;display:flex;
-        background:var(--seg-bg);border-radius:12px;padding:2px;
-        margin:0 0 20px;
-        box-shadow:inset 0 0 0 .5px var(--sep-2);
-        -webkit-backdrop-filter:blur(24px) saturate(180%);
-        backdrop-filter:blur(24px) saturate(180%);
-        animation:fadeUp .55s .08s both;
-    }
-    .seg-btn{
-        flex:1;position:relative;z-index:1;padding:8px 0;
-        font-size:14px;font-weight:600;color:var(--muted);
-        background:none;border:none;font-family:inherit;cursor:pointer;
-        -webkit-tap-highlight-color:transparent;
-        letter-spacing:-.1px;
-        transition:color .28s,transform .18s var(--spring);
-    }
-    .seg-btn:active{transform:scale(.94)}
-    .seg-btn.active{color:var(--fg);font-weight:700}
-    .seg-slider{
-        position:absolute;top:2px;left:2px;
-        width:calc((100% - 4px)/3);height:calc(100% - 4px);
-        background:var(--seg-slider);border-radius:10px;
-        box-shadow:
-            0 1px 2px rgba(0,0,0,.10),
-            0 0 0 .5px rgba(0,0,0,.04),
-            0 4px 10px -3px rgba(0,0,0,.10);
-        transition:transform .44s var(--spring);
-        will-change:transform;
-    }
-
-    .panel{display:none}
-    .panel.active{display:block;animation:panelIn .34s cubic-bezier(.22,1,.36,1)}
-    @keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-    .panel.active>.group{animation:fadeUp .5s .05s cubic-bezier(.22,1,.36,1) both}
-    .panel.active>.btn-primary{animation:fadeUp .5s .13s cubic-bezier(.22,1,.36,1) both}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
-    .group{
-        background:var(--card);border-radius:var(--radius);
-        box-shadow:0 0 0 .5px var(--sep-2);
-        margin-bottom:16px;overflow:hidden;
-        transition:box-shadow .3s;position:relative;
-    }
-    .group:focus-within{box-shadow:var(--ring)}
-    .group>*{position:relative}
-    .group>*+*::before{
-        content:'';position:absolute;top:0;left:16px;right:16px;
-        height:1px;background:var(--sep);
-    }
-
-    .field{padding:13px 16px 15px}
-    .field-label{
-        font-size:12.5px;font-weight:600;display:block;
-        margin-bottom:8px;color:var(--fg-2);letter-spacing:-.05px;
-        display:flex;align-items:center;justify-content:space-between;gap:8px;
-    }
-    .field-hint{font-weight:400;color:var(--muted);margin-left:5px;font-size:12px}
-    .field-label-text{display:flex;align-items:baseline;min-width:0;flex-wrap:wrap}
-    .label-actions{display:flex;gap:6px;flex-shrink:0}
-    textarea{
-        width:100%;border:none;background:transparent;
-        padding:0;font-size:16px;font-family:inherit;color:var(--fg);
-        resize:none;outline:none;line-height:1.55;
-        -webkit-appearance:none;min-height:66px;
-        transition:height .18s ease;
-        caret-color:var(--accent);letter-spacing:-.1px;
-    }
-    textarea::placeholder{color:var(--placeholder);font-weight:400}
-
-    .btn-paste{
-        display:inline-flex;align-items:center;gap:4px;
-        padding:4px 10px;background:var(--accent-soft);
-        border:none;border-radius:7px;
-        color:var(--accent);
-        font-size:11.5px;font-weight:600;font-family:inherit;
-        cursor:pointer;-webkit-tap-highlight-color:transparent;
-        transition:transform .15s var(--spring),background .2s,opacity .2s;
-        letter-spacing:-.05px;flex-shrink:0;
-    }
-    .btn-paste:active{transform:scale(.92)}
-    .btn-paste:disabled{opacity:.5}
-    .btn-paste svg{width:11px;height:11px;flex-shrink:0}
-
-    .file-progress{
-        display:none;align-items:center;gap:8px;
-        margin-top:8px;padding:8px 10px;
-        background:var(--accent-soft);border-radius:8px;
-        color:var(--accent);font-size:12px;font-weight:500;
-        letter-spacing:-.05px;
-    }
-    .file-progress.show{display:flex}
-    .file-progress .spinner{
-        width:14px;height:14px;flex-shrink:0;
-        border:2px solid rgba(0,113,227,.25);
-        border-top-color:var(--accent);
-        border-radius:50%;
-        animation:spin .7s linear infinite;
-    }
-    @keyframes spin{to{transform:rotate(360deg)}}
-
-    /* ★ 新增：压缩能力提示行 */
-    .compress-hint{
-        display:flex;align-items:flex-start;gap:8px;
-        margin:-8px 0 16px;padding:10px 12px;
-        background:rgba(120,120,128,.08);
-        border-radius:10px;
-        font-size:12px;line-height:1.5;
-        color:var(--muted);
-        letter-spacing:-.05px;
-        animation:fadeUp .5s .16s both;
-    }
-    .compress-hint svg{
-        width:14px;height:14px;flex-shrink:0;margin-top:2px;
-        color:var(--muted);
-    }
-    .compress-hint strong{color:var(--fg-2);font-weight:600}
-    .compress-hint.ok{background:rgba(52,199,89,.08);color:var(--ok-text)}
-    .compress-hint.ok svg{color:var(--ok-text)}
-    .compress-hint.ok strong{color:var(--ok-text)}
-    @media(prefers-color-scheme:dark){
-        .compress-hint{background:rgba(120,120,128,.16)}
-        .compress-hint.ok{background:rgba(48,209,88,.14)}
-    }
-
-    .paste-hint{
-        display:flex;align-items:flex-start;gap:8px;
-        margin-top:0;padding:0 12px;
-        background:rgba(255,149,0,.10);
-        border-radius:9px;
-        color:var(--warn-text);font-size:12px;line-height:1.5;
-        opacity:0;max-height:0;overflow:hidden;
-        transition:opacity .3s,max-height .35s,margin-top .3s,padding .3s;
-        letter-spacing:-.05px;
-    }
-    .paste-hint.show{
-        opacity:1;max-height:120px;
-        margin-top:10px;padding:10px 12px;
-    }
-    .paste-hint svg{
-        width:14px;height:14px;flex-shrink:0;margin-top:2px;
-    }
-    .paste-hint strong{font-weight:700}
-    @media(prefers-color-scheme:dark){
-        .paste-hint{
-            background:rgba(255,159,10,.14);
-        }
-    }
-
-    .field-footer{
-        display:flex;justify-content:space-between;align-items:center;
-        margin-top:10px;padding-top:8px;
-        border-top:1px solid var(--sep-2);
-        gap:8px;min-height:24px;
-    }
-    .field-count{
-        font-size:11.5px;color:var(--muted);
-        font-variant-numeric:tabular-nums;letter-spacing:-.05px;
-        display:flex;align-items:center;gap:8px;
-        min-width:0;flex-wrap:wrap;
-    }
-    .field-count .count-num{white-space:nowrap}
-    .field-count .capacity-hint{
-        font-size:11px;padding:1px 6px;border-radius:5px;
-        background:rgba(120,120,128,.10);color:var(--muted);
-        letter-spacing:-.05px;white-space:nowrap;
-    }
-    .field-count .capacity-hint.warn{
-        background:rgba(255,149,0,.14);color:var(--warn-text);
-    }
-    .field-count .capacity-hint.danger{
-        background:rgba(215,0,21,.10);color:var(--danger-text);
-    }
-    .field-count.warn{color:var(--warn-text);font-weight:600}
-    .field-count.danger{color:var(--danger-text);font-weight:600}
-    .btn-clear{
-        display:inline-flex;align-items:center;gap:3px;
-        padding:3px 8px;background:none;border:none;
-        color:var(--muted);font-size:11.5px;font-family:inherit;font-weight:500;
-        cursor:pointer;border-radius:6px;
-        transition:background .15s,color .15s,opacity .2s;
-        -webkit-tap-highlight-color:transparent;letter-spacing:-.05px;
-        flex-shrink:0;
-    }
-    .btn-clear:active:not(:disabled){background:rgba(120,120,128,.12);color:var(--fg-2)}
-    .btn-clear:disabled{opacity:0;pointer-events:none}
-
-    .password-wrap{display:flex;align-items:center;gap:6px}
-    .password-wrap input{
-        flex:1;min-width:0;border:none;background:transparent;
-        padding:0;font-size:16px;font-family:inherit;color:var(--fg);
-        outline:none;-webkit-appearance:none;
-        letter-spacing:.5px;font-variant-numeric:tabular-nums;
-        caret-color:var(--accent);
-    }
-    .password-wrap input::placeholder{color:var(--placeholder);font-weight:400;letter-spacing:-.1px}
-    .btn-toggle-pw{
-        display:flex;align-items:center;justify-content:center;
-        background:none;border:none;padding:4px;margin-right:-4px;
-        cursor:pointer;color:var(--muted);border-radius:6px;
-        flex-shrink:0;transition:color .15s,background .15s;
-        -webkit-tap-highlight-color:transparent;
-    }
-    .btn-toggle-pw:active{background:rgba(120,120,128,.12);color:var(--fg-2)}
-    .btn-toggle-pw svg{width:18px;height:18px;display:block}
-    .btn-toggle-pw .icon-eye-off{display:none}
-    .btn-toggle-pw.revealed .icon-eye{display:none}
-    .btn-toggle-pw.revealed .icon-eye-off{display:block}
-
-    .pw-strength{
-        display:flex;align-items:center;gap:8px;
-        margin-top:10px;padding-top:8px;
-        border-top:1px solid var(--sep-2);
-        opacity:0;max-height:0;overflow:hidden;
-        transition:opacity .25s,max-height .3s,margin-top .25s,padding-top .25s;
-    }
-    .pw-strength.show{
-        opacity:1;max-height:30px;
-        margin-top:10px;padding-top:8px;
-    }
-    .pw-bars{display:flex;gap:3px;flex:1}
-    .pw-bar{
-        flex:1;height:4px;border-radius:2px;
-        background:rgba(120,120,128,.18);
-        transition:background .25s;
-    }
-    .pw-bar.active-weak{background:var(--danger)}
-    .pw-bar.active-fair{background:var(--warn)}
-    .pw-bar.active-good{background:#5AC8FA}
-    .pw-bar.active-strong{background:var(--ok)}
-    .pw-strength-label{
-        font-size:11px;font-weight:600;
-        min-width:44px;text-align:right;
-        letter-spacing:-.05px;
-        color:var(--muted);
-    }
-    .pw-strength-label.tone-weak{color:var(--danger-text)}
-    .pw-strength-label.tone-fair{color:var(--warn-text)}
-    .pw-strength-label.tone-good{color:#1B87C9}
-    .pw-strength-label.tone-strong{color:var(--ok-text)}
-
-    .row{
-        display:flex;align-items:center;gap:8px;
-        width:100%;padding:14px 16px;
-        background:none;border:none;cursor:pointer;
-        font-family:inherit;font-size:15px;color:var(--fg);text-align:left;
-        -webkit-tap-highlight-color:transparent;transition:background .15s;
-    }
-    .row:active{background:rgba(120,120,128,.08)}
-    .row-label{font-size:15px;flex-shrink:0;font-weight:500;letter-spacing:-.1px}
-    .row-value{
-        margin-left:auto;font-size:13.5px;color:var(--muted);
-        max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-        font-weight:500;
-    }
-    .chev{width:13px;height:13px;color:var(--chev);flex-shrink:0}
-
-    .btn-primary{
-        width:100%;padding:16px;
-        background:linear-gradient(180deg, var(--accent-2), var(--accent));
-        color:#FFF;border:none;border-radius:var(--radius);
-        font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;
-        letter-spacing:-.2px;position:relative;
-        -webkit-tap-highlight-color:transparent;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.18);
-        transition:transform .15s var(--spring), filter .2s;
-    }
-    .btn-primary:active:not(:disabled){
-        transform:scale(.975);
-        filter:brightness(.94);
-    }
-    .btn-primary:disabled{opacity:.65;cursor:not-allowed;pointer-events:none}
-    .btn-primary.loading{color:transparent;pointer-events:none}
-    .btn-primary.loading::before{
-        content:'处理中…';
-        position:absolute;top:50%;left:50%;
-        transform:translate(-50%,-50%);
-        color:#FFF;font-size:15px;font-weight:600;
-        letter-spacing:-.1px;
-    }
-    .btn-primary.loading.show-spinner::before{content:''}
-    .btn-primary.loading::after{
-        content:'';position:absolute;top:50%;left:50%;
-        width:18px;height:18px;margin:-9px 0 0 -9px;
-        border:2px solid rgba(255,255,255,.35);
-        border-top-color:transparent;border-radius:50%;
-        animation:spin .7s linear infinite;
-        opacity:0;
-    }
-    .btn-primary.loading.show-spinner::after{opacity:1}
-
-    .result-block{
-        max-height:0;opacity:0;overflow:hidden;
-        margin-top:0;margin-bottom:0;
-        transition:max-height .5s var(--ios),opacity .32s .05s,margin-top .32s,margin-bottom .32s;
-    }
-    .result-block.show{opacity:1;margin-top:20px;margin-bottom:16px}
-    .result-head{
-        display:flex;justify-content:space-between;align-items:center;
-        gap:10px;padding:15px 16px 8px;
-    }
-    .result-title{
-        font-size:13.5px;font-weight:700;flex-shrink:0;
-        color:var(--fg-2);letter-spacing:-.1px;
-        display:flex;align-items:center;gap:7px;
-    }
-    .result-title::before{
-        content:'';width:6px;height:6px;border-radius:50%;
-        background:linear-gradient(180deg, var(--accent-2), var(--accent));
-        flex-shrink:0;
-    }
-    .result-actions{display:flex;align-items:center;gap:8px;min-width:0}
-    .result-meta{
-        font-size:12px;color:var(--muted);
-        font-variant-numeric:tabular-nums;white-space:nowrap;
-        letter-spacing:-.1px;
-    }
-    .result-body{
-        margin:6px 16px 10px;padding:13px 15px;
-        background:var(--card-2);border-radius:11px;
-        box-shadow:inset 0 0 0 .5px var(--sep-2);
-        font-size:15px;line-height:1.6;word-break:break-all;user-select:all;
-        min-height:46px;max-height:240px;overflow-y:auto;
-        -webkit-overflow-scrolling:touch;
-    }
-    .result-stats{
-        display:flex;gap:14px;flex-wrap:wrap;
-        margin:0 16px 16px;
-        font-size:11.5px;color:var(--muted);
-        letter-spacing:-.05px;line-height:1.5;
-    }
-    .result-stats span{
-        display:inline-flex;align-items:center;gap:4px;
-    }
-    .result-stats span::before{
-        content:'';width:5px;height:5px;border-radius:50%;
-        background:var(--muted);opacity:.5;
-    }
-    .result-stats span.hl{color:var(--accent);font-weight:600}
-    .result-stats span.hl::before{background:var(--accent);opacity:1}
-    .result-stats span.warn{color:var(--warn-text);font-weight:600}
-    .result-stats span.warn::before{background:var(--warn);opacity:1}
-
-    .btn-copy{
-        display:inline-flex;align-items:center;gap:5px;
-        padding:6px 13px;border:none;border-radius:999px;
-        background:var(--accent-soft);color:var(--accent);
-        font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;
-        -webkit-tap-highlight-color:transparent;flex-shrink:0;
-        box-shadow:inset 0 0 0 .5px rgba(0,113,227,.12);
-        transition:transform .15s var(--spring),background .25s,color .25s;
-    }
-    .btn-copy:active{transform:scale(.93)}
-    .btn-copy.done{
-        background:rgba(52,199,89,.14);color:var(--ok-text);
-        box-shadow:inset 0 0 0 .5px rgba(52,199,89,.18);
-    }
-    .btn-copy svg{flex-shrink:0}
-
-    .extracted{
-        margin:14px 16px 10px;padding:14px 16px;
-        background:linear-gradient(180deg, var(--accent-soft), rgba(0,113,227,.06));
-        border-radius:12px;
-        box-shadow:inset 0 0 0 .5px rgba(0,113,227,.14);
-        font-size:16px;line-height:1.55;word-break:break-all;user-select:all;
-        animation:rise .45s var(--spring) both;
-    }
-    @keyframes rise{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
-
-    .status-card{
-        display:flex;align-items:flex-start;gap:11px;
-        margin:14px 16px 16px;padding:12px 14px;
-        border-radius:12px;font-size:13.5px;line-height:1.5;
-        animation:rise .4s var(--spring) both;
-    }
-    .status-card.tone-error{
-        background:rgba(215,0,21,.08);
-        box-shadow:inset 0 0 0 .5px rgba(215,0,21,.16);
-        color:var(--danger-text);
-    }
-    .status-card.tone-warn{
-        background:rgba(255,149,0,.10);
-        box-shadow:inset 0 0 0 .5px rgba(255,149,0,.20);
-        color:var(--warn-text);
-    }
-    .status-card.tone-ok{
-        background:rgba(52,199,89,.10);
-        box-shadow:inset 0 0 0 .5px rgba(52,199,89,.18);
-        color:var(--ok-text);
-    }
-    @media(prefers-color-scheme:dark){
-        .status-card.tone-error{
-            background:rgba(255,69,58,.14);
-            box-shadow:inset 0 0 0 .5px rgba(255,69,58,.22);
-        }
-        .status-card.tone-warn{
-            background:rgba(255,159,10,.14);
-            box-shadow:inset 0 0 0 .5px rgba(255,159,10,.22);
-        }
-        .status-card.tone-ok{
-            background:rgba(48,209,88,.14);
-            box-shadow:inset 0 0 0 .5px rgba(48,209,88,.22);
-        }
-    }
-    .status-icon{
-        width:20px;height:20px;flex-shrink:0;
-        display:flex;align-items:center;justify-content:center;
-        border-radius:50%;font-size:13px;font-weight:800;font-style:italic;
-        color:#FFF;margin-top:1px;
-    }
-    .status-card.tone-error .status-icon{background:var(--danger-text)}
-    .status-card.tone-warn .status-icon{background:var(--warn)}
-    .status-card.tone-ok .status-icon{background:var(--ok-text)}
-    .status-text{flex:1;min-width:0;font-weight:500}
-    .status-text strong{font-weight:700}
-    .scheme-found{
-        margin:0 16px 16px;font-size:12.5px;color:var(--muted);
-        letter-spacing:-.05px;
-    }
-    .scheme-found strong{color:var(--accent);font-weight:600}
-
-    .stats{display:flex;gap:10px;margin-bottom:14px}
-    .stat{
-        flex:1;background:var(--card);border-radius:var(--radius);
-        padding:16px 6px 14px;text-align:center;
-        box-shadow:0 0 0 .5px var(--sep-2);
-        position:relative;overflow:hidden;
-        animation:pop .42s var(--spring) both;
-    }
-    .stat::before{
-        content:'';position:absolute;inset:0;
-        background:linear-gradient(180deg, transparent 40%, rgba(120,120,128,.035));
-        pointer-events:none;
-    }
-    .stat:nth-child(2){animation-delay:.06s}
-    .stat:nth-child(3){animation-delay:.12s}
-    @keyframes pop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
-    .stat-num{
-        font-size:27px;font-weight:800;letter-spacing:-1.2px;
-        line-height:1;font-variant-numeric:tabular-nums;
-        background:linear-gradient(180deg, var(--fg) 20%, var(--fg-2));
-        -webkit-background-clip:text;background-clip:text;
-        -webkit-text-fill-color:transparent;position:relative;
-    }
-    .stat-num.hl{
-        background:linear-gradient(180deg, var(--accent-2), var(--accent));
-        -webkit-background-clip:text;background-clip:text;
-        -webkit-text-fill-color:transparent;
-    }
-    @supports not (-webkit-background-clip:text){
-        .stat-num{background:none;-webkit-text-fill-color:var(--fg);color:var(--fg)}
-        .stat-num.hl{background:none;-webkit-text-fill-color:var(--accent);color:var(--accent)}
-    }
-    .stat-label{
-        font-size:11.5px;color:var(--muted);margin-top:5px;
-        letter-spacing:-.05px;font-weight:500;
-    }
-
-    .tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;min-height:30px}
-    .tag{
-        display:inline-flex;align-items:center;gap:6px;
-        padding:6px 11px;background:var(--card);border-radius:10px;font-size:12px;
-        box-shadow:0 0 0 .5px var(--sep-2);
-        animation:pop .34s var(--spring) both;letter-spacing:-.05px;
-    }
-    .tag-dot{
-        width:7px;height:7px;border-radius:50%;flex-shrink:0;
-    }
-    .tag-name{font-weight:600;color:var(--fg-2)}
-    .tag-code{color:var(--muted);font-family:var(--mono);font-size:10.5px}
-    .tag-count{font-weight:700;margin-left:1px;font-variant-numeric:tabular-nums}
-    .tags-empty{
-        display:inline-flex;align-items:center;gap:8px;
-        font-size:13px;color:var(--muted);line-height:30px;
-    }
-    .tags-empty::before{
-        content:'';width:6px;height:6px;border-radius:50%;
-        background:var(--muted);opacity:.4;
-    }
-
-    .viz-title{
-        display:flex;justify-content:space-between;align-items:center;
-        font-size:13.5px;font-weight:700;padding:15px 16px 8px;
-        color:var(--fg-2);letter-spacing:-.1px;gap:8px;
-    }
-    .viz-title-actions{display:flex;gap:8px}
-    .viz{
-        margin:6px 16px 16px;padding:13px 15px;
-        background:var(--card-2);border-radius:11px;
-        box-shadow:inset 0 0 0 .5px var(--sep-2);
-        font-size:15px;line-height:2.3;word-break:break-all;
-        max-height:264px;overflow-y:auto;
-        -webkit-overflow-scrolling:touch;
-    }
-    .zw{
-        display:inline-block;padding:1px 5px;border-radius:5px;
-        font-size:9.5px;font-weight:700;font-family:var(--mono);
-        vertical-align:middle;margin:0 1px;line-height:1.75;
-        position:relative;top:-.5px;white-space:nowrap;
-        box-shadow:inset 0 0 0 .5px currentColor;
-        animation:pop .3s var(--spring) both;
-    }
-    .viz-empty{
-        display:inline-flex;align-items:center;gap:8px;
-        color:var(--muted);font-size:13.5px;
-    }
-    .viz-empty::before{
-        content:'';width:6px;height:6px;border-radius:50%;
-        background:var(--muted);opacity:.4;
-    }
-    .viz-more{display:block;font-size:11.5px;color:var(--muted);margin-top:8px}
-    @media(prefers-color-scheme:dark){
-        .zw{filter:brightness(1.75) saturate(1.15)}
-    }
-
-    .sheet-overlay{
-        position:fixed;inset:0;z-index:100;
-        background:rgba(0,0,0,.42);
-        -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
-        opacity:0;visibility:hidden;transition:opacity .34s,visibility .34s;
-    }
-    .sheet-overlay.open{opacity:1;visibility:visible}
-    .sheet{
-        position:fixed;left:50%;bottom:0;z-index:101;
-        width:min(100%,520px);
-        background:var(--card);
-        border-radius:20px 20px 0 0;
-        transform:translateX(-50%) translateY(104%);
-        transition:transform .44s var(--ios);
-        max-height:78vh;display:flex;flex-direction:column;
-        padding-bottom:calc(6px + env(safe-area-inset-bottom));
-        box-shadow:0 -1px 0 var(--sep-2), 0 -12px 48px -8px rgba(0,0,0,.18);
-    }
-    .sheet.open{transform:translateX(-50%) translateY(0)}
-    .sheet-handle{
-        width:38px;height:5px;border-radius:3px;
-        background:rgba(120,120,128,.28);margin:10px auto 4px;flex-shrink:0;
-    }
-    .sheet-title{
-        padding:10px 18px 14px;text-align:center;
-        font-size:13px;font-weight:600;color:var(--muted);
-        border-bottom:1px solid var(--sep);flex-shrink:0;letter-spacing:-.1px;
-    }
-    .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:2px 0 6px}
-    .sheet-opt{
-        display:flex;align-items:center;gap:12px;
-        width:100%;padding:14px 18px;
-        background:none;border:none;cursor:pointer;
-        font-family:inherit;text-align:left;
-        -webkit-tap-highlight-color:transparent;
-        position:relative;transition:background .15s;
-    }
-    .sheet-opt:active{background:rgba(120,120,128,.08)}
-    .sheet-opt+.sheet-opt::before{
-        content:'';position:absolute;top:0;left:18px;right:18px;
-        height:1px;background:var(--sep);
-    }
-    .opt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-    .opt-name{font-size:15.5px;font-weight:600;letter-spacing:-.15px}
-    .opt-desc{font-size:12px;color:var(--muted);font-family:var(--mono)}
-    .opt-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:1px}
-    .opt-check{
-        width:22px;height:22px;flex-shrink:0;color:var(--accent);
-        opacity:0;transform:scale(.4);
-        transition:opacity .2s,transform .3s var(--spring);
-    }
-    .sheet-opt.selected .opt-check{opacity:1;transform:scale(1)}
-    .sheet-opt.selected .opt-name{color:var(--accent)}
-    .sheet-cancel{
-        width:100%;padding:16px;background:none;border:none;
-        border-top:1px solid var(--sep);
-        font-size:16px;font-weight:600;color:var(--accent);
-        font-family:inherit;cursor:pointer;flex-shrink:0;letter-spacing:-.2px;
-        -webkit-tap-highlight-color:transparent;transition:background .15s;
-    }
-    .sheet-cancel:active{background:rgba(120,120,128,.08)}
-
-    .toast{
-        position:fixed;top:calc(14px + env(safe-area-inset-top));left:50%;
-        transform:translateX(-50%) translateY(-20px) scale(.92);
-        background:var(--toast-bg);color:#FFF;
-        -webkit-backdrop-filter:blur(20px) saturate(180%);
-        backdrop-filter:blur(20px) saturate(180%);
-        padding:11px 20px;border-radius:999px;
-        font-size:13.5px;font-weight:600;white-space:nowrap;
-        letter-spacing:-.1px;
-        opacity:0;pointer-events:none;z-index:200;
-        box-shadow:0 12px 32px -8px rgba(0,0,0,.28), inset 0 0 0 .5px rgba(255,255,255,.08);
-        transition:opacity .32s,transform .38s var(--spring);
-        max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis;
-    }
-    .toast.visible{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
-
-    .btn-top{
-        position:fixed;
-        right:calc(50% - 260px + 16px);
-        bottom:calc(20px + env(safe-area-inset-bottom));
-        z-index:50;
-        width:44px;height:44px;border-radius:50%;
-        background:var(--card);
-        border:none;cursor:pointer;
-        display:flex;align-items:center;justify-content:center;
-        color:var(--fg-2);
-        box-shadow:0 0 0 .5px var(--sep-2), 0 6px 20px -4px rgba(0,0,0,.15);
-        opacity:0;visibility:hidden;transform:scale(.7) translateY(10px);
-        transition:opacity .3s,visibility .3s,transform .35s var(--spring);
-        -webkit-tap-highlight-color:transparent;
-    }
-    @media(max-width:552px){
-        .btn-top{right:16px}
-    }
-    .btn-top.visible{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
-    .btn-top:active{transform:scale(.9)}
-    .btn-top svg{width:18px;height:18px}
-
-    .foot{padding:14px 0 4px;text-align:center}
-    .foot span{
-        font-size:11.5px;color:var(--muted);line-height:1.85;
-        display:block;opacity:.7;letter-spacing:-.05px;
-    }
-
-    @media(prefers-reduced-motion:reduce){
-        *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
-    }
+:root{
+  --bg:#F2F2F6;--bg-elevated:#FFFFFF;--card:rgba(255,255,255,.92);
+  --fg:#000000;--fg-secondary:#3C3C4399;--fg-tertiary:#3C3C4366;
+  --separator:#3C3C431A;--separator-light:#3C3C430D;
+  --blue:#007AFF;--blue-light:#007AFF1A;--blue-press:#0056D6;
+  --green:#34C759;--green-soft:#34C75914;--orange:#FF9500;--orange-soft:#FF950014;
+  --red:#FF3B30;--red-soft:#FF3B3014;--teal:#30B0C7;--purple:#AF52DE;
+  --radius-sm:10px;--radius-md:14px;--radius-lg:20px;--radius-xl:26px;--radius-pill:999px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 1px 0 rgba(0,0,0,.02);
+  --shadow-md:0 4px 16px rgba(0,0,0,.06), 0 1px 0 rgba(0,0,0,.03);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.10);
+  --shadow-button:0 6px 20px -4px rgba(0,122,255,.38);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  --mono:"SF Mono",SFMono-Regular,ui-monospace,Menlo,monospace;
+  --ease-out:cubic-bezier(.22,1,.36,1);--ease-spring:cubic-bezier(.32,1.35,.45,1);--ease-ios:cubic-bezier(.32,.72,0,1);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#000000;--bg-elevated:#1C1C1E;--card:rgba(28,28,30,.90);
+    --fg:#FFFFFF;--fg-secondary:#EBEBF599;--fg-tertiary:#EBEBF54D;
+    --separator:#54545866;--separator-light:#54545833;
+    --blue:#0A84FF;--blue-light:#0A84FF1A;--blue-press:#409CFF;
+    --green:#30D158;--green-soft:#30D1581A;--orange:#FF9F0A;--orange-soft:#FF9F0A1A;
+    --red:#FF453A;--red-soft:#FF453A1A;--teal:#40CBD8;--purple:#BF5AF2;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.18), 0 1px 0 rgba(255,255,255,.04);
+    --shadow-md:0 4px 16px rgba(0,0,0,.22), 0 1px 0 rgba(255,255,255,.03);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.35);
+    --shadow-button:0 6px 20px -4px rgba(10,132,255,.35);
+  }
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{font-family:var(--font);background:var(--bg);color:var(--fg);font-size:16px;line-height:1.45;min-height:100vh;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+::-webkit-scrollbar{width:0;height:0}
+.app{max-width:540px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));min-height:100vh}
+.header{display:flex;align-items:center;gap:14px;padding:12px 2px 26px;animation:fadeUp .55s var(--ease-out) both}
+.brand-icon{width:48px;height:48px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--blue),#5AC8FA);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--shadow-button)}
+.brand-icon svg{width:22px;height:22px}
+.brand-text h1{font-size:28px;font-weight:700;letter-spacing:-.7px;line-height:1.1}
+.brand-text p{font-size:13px;color:var(--fg-secondary);margin-top:4px;font-weight:500}
+.tabbar{position:relative;display:flex;justify-content:center;margin-bottom:26px;animation:fadeUp .55s .05s var(--ease-out) both}
+.tabbar-inner{display:inline-flex;position:relative;background:var(--card);border-radius:var(--radius-pill);padding:4px;box-shadow:var(--shadow-md);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}
+.tab-btn{position:relative;z-index:1;padding:9px 22px;font-size:14px;font-weight:500;color:var(--fg-secondary);background:none;border:none;border-radius:var(--radius-pill);font-family:inherit;cursor:pointer;transition:color .28s var(--ease-out),transform .12s}
+.tab-btn:active{transform:scale(.95)}
+.tab-btn.active{color:#fff;font-weight:600}
+.tab-glider{position:absolute;top:4px;left:4px;height:calc(100% - 8px);width:calc((100% - 8px)/3);background:var(--blue);border-radius:var(--radius-pill);box-shadow:0 2px 8px rgba(0,122,255,.35);transition:transform .4s var(--ease-spring);will-change:transform}
+.panel{display:none}
+.panel.active{display:block;animation:panelIn .4s var(--ease-out) both}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);margin-bottom:16px;overflow:hidden;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);animation:fadeUp .5s .08s var(--ease-out) both}
+.card>*{position:relative}
+.card-row{display:flex;align-items:center;gap:12px;width:100%;padding:15px 18px;background:none;border:none;font-family:inherit;font-size:16px;color:var(--fg);text-align:left;cursor:pointer;transition:background .15s}
+.card-row:active{background:var(--separator-light)}
+.card-row:not(:last-child)::after{content:'';position:absolute;bottom:0;left:18px;right:18px;height:1px;background:var(--separator)}
+.card-row.disabled{opacity:.4;pointer-events:none}
+.row-label{font-weight:500;flex-shrink:0}
+.row-value{margin-left:auto;font-size:15px;color:var(--fg-secondary);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chev{width:14px;height:14px;color:var(--fg-tertiary);flex-shrink:0;margin-left:4px}
+.switch-track{margin-left:auto;width:48px;height:28px;border-radius:var(--radius-pill);background:var(--separator);position:relative;transition:background .25s;flex-shrink:0}
+.switch-track::after{content:'';position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.18);transition:transform .28s var(--ease-spring)}
+.switch-track.on{background:var(--green)}
+.switch-track.on::after{transform:translateX(20px)}
+.field{padding:16px 18px}
+.field-label{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:600;color:var(--fg-secondary);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px}
+.field-title{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.field-hint{font-weight:500;color:var(--fg-tertiary);text-transform:none;letter-spacing:0;font-size:12px}
+textarea,input[type=password]{width:100%;border:none;background:transparent;padding:0;font-family:inherit;font-size:17px;color:var(--fg);line-height:1.55;resize:none;outline:none;-webkit-appearance:none;caret-color:var(--blue)}
+textarea::placeholder,input[type=password]::placeholder{color:var(--fg-tertiary)}
+.password-wrap{display:flex;align-items:center;gap:8px;margin-top:2px}
+.password-wrap input{min-width:0;letter-spacing:.6px}
+.btn-eye{width:32px;height:32px;border-radius:50%;border:none;background:none;display:flex;align-items:center;justify-content:center;color:var(--fg-secondary);cursor:pointer;transition:background .15s,color .15s}
+.btn-eye:active{background:var(--separator-light);color:var(--fg)}
+.btn-eye svg{width:18px;height:18px;display:block}
+.btn-eye .eye-off{display:none}
+.btn-eye.revealed .eye{display:none}
+.btn-eye.revealed .eye-off{display:block}
+.field-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--separator-light)}
+.field-count{font-size:12px;color:var(--fg-secondary);font-weight:500;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);background:var(--separator-light);color:var(--fg-secondary)}
+.badge.warn{background:var(--orange-soft);color:var(--orange)}
+.badge.danger{background:var(--red-soft);color:var(--red)}
+.badge.ok{background:var(--green-soft);color:var(--green)}
+.badge.purple{background:rgba(175,82,222,.14);color:var(--purple)}
+.badge.blue{background:var(--blue-light);color:var(--blue)}
+.btn-clear{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:none;border:none;border-radius:var(--radius-sm);color:var(--fg-tertiary);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;transition:background .15s,color .15s,opacity .2s}
+.btn-clear:active:not(:disabled){background:var(--separator-light);color:var(--fg-secondary)}
+.btn-clear:disabled{opacity:0;pointer-events:none}
+.icon-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:var(--blue-light);border:none;border-radius:var(--radius-pill);color:var(--blue);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;transition:transform .12s,background .2s}
+.icon-btn svg{width:12px;height:12px}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn:disabled{opacity:.5}
+.icon-btn.done{background:var(--green-soft);color:var(--green)}
+.btn-primary{width:100%;padding:16px;border:none;border-radius:var(--radius-md);background:var(--blue);color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:var(--shadow-button);transition:transform .12s,filter .2s,opacity .2s;animation:fadeUp .5s .12s var(--ease-out) both;position:relative;overflow:hidden}
+.btn-primary:active:not(:disabled){transform:scale(.985);filter:brightness(.96)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;pointer-events:none}
+.btn-primary.loading{color:transparent;pointer-events:none}
+.btn-primary.loading::before{content:attr(data-loading);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600}
+.btn-primary.loading.spin::before{opacity:0}
+.btn-primary.loading.spin::after{content:'';position:absolute;top:50%;left:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border:2px solid rgba(255,255,255,.35);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+.hint{display:flex;align-items:flex-start;gap:10px;margin:0 2px 16px;padding:12px 14px;border-radius:var(--radius-md);background:var(--card);box-shadow:var(--shadow-sm);font-size:13px;line-height:1.5;color:var(--fg-secondary);animation:fadeUp .5s .14s both}
+.hint svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;color:var(--blue)}
+.hint.ok{background:var(--green-soft);color:var(--green)}
+.hint.ok svg{color:var(--green)}
+.hint strong{font-weight:600;color:var(--fg)}
+.result{display:grid;grid-template-rows:0fr;opacity:0;margin-top:0;margin-bottom:0;transition:grid-template-rows .45s var(--ease-ios),opacity .35s .05s,margin .35s}
+.result.open{grid-template-rows:1fr;opacity:1;margin-top:18px;margin-bottom:16px}
+.result-inner{overflow:hidden}
+.result-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px 8px}
+.result-title{font-size:13px;font-weight:600;color:var(--fg-secondary);display:flex;align-items:center;gap:8px}
+.result-title::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.result-actions{display:flex;gap:8px}
+.result-body{margin:6px 18px 14px;padding:14px 16px;background:var(--bg);border-radius:var(--radius-md);font-size:15px;line-height:1.6;word-break:break-all;user-select:all;min-height:52px;max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;color:var(--fg)}
+.result-stats{display:flex;gap:10px;flex-wrap:wrap;margin:0 18px 16px}
+.stat-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--radius-pill);background:var(--separator-light);font-size:11.5px;font-weight:500;color:var(--fg-secondary)}
+.stat-pill.hl{background:var(--blue-light);color:var(--blue)}
+.stat-pill.warn{background:var(--orange-soft);color:var(--orange)}
+.stat-pill.purple{background:rgba(175,82,222,.14);color:var(--purple)}
+.stat-pill.gold{background:rgba(255,149,0,.14);color:var(--orange)}
+.stat-pill.gray{background:var(--separator-light);color:var(--fg-secondary)}
+.extracted{margin:16px 18px 12px;padding:16px 18px;background:var(--blue-light);border-radius:var(--radius-md);font-size:16px;line-height:1.55;word-break:break-all;user-select:all;animation:rise .4s var(--ease-spring) both}
+.scheme-note{margin:0 18px 16px;font-size:12.5px;color:var(--fg-secondary);line-height:1.5}
+.scheme-note strong{color:var(--blue);font-weight:600}
+.status-card{display:flex;align-items:flex-start;gap:12px;margin:16px 18px 18px;padding:14px 16px;border-radius:var(--radius-md);font-size:14.5px;line-height:1.55;animation:rise .4s var(--ease-spring) both}
+.status-card.error{background:var(--red-soft);color:var(--red)}
+.status-card.warn{background:var(--orange-soft);color:var(--orange)}
+.status-card.ok{background:var(--green-soft);color:var(--green)}
+.status-icon{width:22px;height:22px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;margin-top:1px}
+.status-card.error .status-icon{background:var(--red)}
+.status-card.warn .status-icon{background:var(--orange)}
+.status-card.ok .status-icon{background:var(--green)}
+.status-text{font-weight:500}
+.status-text strong{font-weight:700}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.metric{background:var(--card);border-radius:var(--radius-lg);padding:16px 4px;text-align:center;box-shadow:var(--shadow-sm);animation:pop .45s var(--ease-spring) both}
+.metric:nth-child(2){animation-delay:.05s}
+.metric:nth-child(3){animation-delay:.10s}
+.stat-num,.metric-num{font-size:26px;font-weight:700;letter-spacing:-.7px;color:var(--fg);line-height:1;font-variant-numeric:tabular-nums}
+.stat-num.hl,.metric-num.hl{color:var(--blue)}
+.metric-label{font-size:11px;font-weight:600;color:var(--fg-secondary);margin-top:6px;text-transform:uppercase;letter-spacing:.3px}
+@keyframes pop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;min-height:32px}
+.tag{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--card);border-radius:var(--radius-pill);box-shadow:var(--shadow-sm);font-size:12.5px;font-weight:500;animation:pop .32s var(--ease-spring) both}
+.tag-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.tag-name{color:var(--fg)}
+.tag-code{font-family:var(--mono);font-size:10.5px;color:var(--fg-tertiary)}
+.tag-count{font-weight:700;margin-left:2px;font-variant-numeric:tabular-nums}
+.tags-empty{display:inline-flex;align-items:center;gap:8px;color:var(--fg-secondary);font-size:13px;line-height:32px}
+.viz-wrap{margin-top:10px}
+.viz{padding:14px 16px;background:var(--bg);border-radius:var(--radius-md);font-size:15px;line-height:2.4;word-break:break-all;max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.zw-chip{display:inline-flex;align-items:center;justify-content:center;height:20px;padding:0 7px;border-radius:var(--radius-sm);font-size:9px;font-weight:700;font-family:var(--mono);margin:0 2px;vertical-align:middle;position:relative;top:-1px;animation:pop .3s var(--ease-spring) both}
+.viz-empty{display:inline-flex;align-items:center;gap:8px;color:var(--fg-secondary);font-size:13.5px}
+.viz-more{display:block;font-size:11.5px;color:var(--fg-secondary);margin-top:10px}
+.sheet-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.sheet-overlay.open{opacity:1;visibility:visible}
+.sheet{position:fixed;left:50%;bottom:0;z-index:101;width:min(100%,540px);background:var(--bg-elevated);border-radius:26px 26px 0 0;transform:translateX(-50%) translateY(104%);transition:transform .42s var(--ease-ios);max-height:80vh;display:flex;flex-direction:column;padding-bottom:calc(8px + env(safe-area-inset-bottom));box-shadow:var(--shadow-lg)}
+.sheet.open{transform:translateX(-50%) translateY(0)}
+.sheet-handle{width:38px;height:5px;border-radius:3px;background:var(--separator);margin:10px auto 4px;flex-shrink:0}
+.sheet-title{padding:12px 20px 14px;text-align:center;font-size:13px;font-weight:600;color:var(--fg-secondary);border-bottom:1px solid var(--separator);flex-shrink:0}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 0}
+.sheet-opt{display:flex;align-items:center;gap:14px;width:100%;padding:15px 20px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;position:relative;transition:background .15s}
+.sheet-opt:active{background:var(--separator-light)}
+.sheet-opt:not(:first-child)::before{content:'';position:absolute;top:0;left:20px;right:20px;height:1px;background:var(--separator)}
+.opt-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.opt-name{font-size:16px;font-weight:500;color:var(--fg)}
+.opt-desc{font-size:12px;color:var(--fg-secondary);font-family:var(--mono)}
+.opt-note{font-size:12px;color:var(--fg-tertiary);line-height:1.4;margin-top:1px}
+.opt-check{width:22px;height:22px;flex-shrink:0;color:var(--blue);opacity:0;transform:scale(.4);transition:opacity .2s,transform .3s var(--ease-spring)}
+.sheet-opt.selected .opt-check{opacity:1;transform:scale(1)}
+.sheet-opt.selected .opt-name{color:var(--blue);font-weight:600}
+.sheet-cancel{width:100%;padding:17px;background:none;border:none;border-top:1px solid var(--separator);font-size:16px;font-weight:600;color:var(--blue);font-family:inherit;cursor:pointer;flex-shrink:0;transition:background .15s}
+.sheet-cancel:active{background:var(--separator-light)}
+.toast{position:fixed;top:calc(16px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-20px) scale(.94);background:rgba(48,48,48,.92);color:#fff;-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);padding:11px 22px;border-radius:var(--radius-pill);font-size:14px;font-weight:500;white-space:nowrap;opacity:0;pointer-events:none;z-index:200;max-width:calc(100vw - 40px);overflow:hidden;text-overflow:ellipsis;box-shadow:var(--shadow-lg);transition:opacity .3s,transform .36s var(--ease-spring)}
+.toast.visible{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.btn-top{position:fixed;right:calc(50% - 270px + 18px);bottom:calc(22px + env(safe-area-inset-bottom));z-index:50;width:44px;height:44px;border-radius:50%;border:none;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--fg-secondary);box-shadow:var(--shadow-md);cursor:pointer;opacity:0;visibility:hidden;transform:scale(.7) translateY(10px);transition:all .34s var(--ease-spring)}
+@media(max-width:580px){.btn-top{right:18px}}
+.btn-top.visible{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
+.btn-top:active{transform:scale(.9);color:var(--fg)}
+.btn-top svg{width:18px;height:18px}
+.foot{text-align:center;padding:22px 0 0}
+.foot span{font-size:11px;color:var(--fg-tertiary);font-weight:500;line-height:1.7;display:block}
+.file-progress{display:none;align-items:center;gap:8px;margin-top:10px;padding:9px 12px;background:var(--blue-light);border-radius:var(--radius-sm);color:var(--blue);font-size:12px;font-weight:500}
+.file-progress.show{display:flex}
+.file-progress .spinner{width:13px;height:13px;border:2px solid rgba(0,122,255,.25);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+.paste-hint{display:flex;align-items:flex-start;gap:8px;margin-top:0;padding:0 12px;background:var(--orange-soft);border-radius:var(--radius-sm);color:var(--orange);font-size:12px;line-height:1.5;opacity:0;max-height:0;overflow:hidden;transition:opacity .3s,max-height .35s,margin-top .3s,padding .3s}
+.paste-hint.show{opacity:1;max-height:120px;margin-top:10px;padding:10px 12px}
+.paste-hint svg{width:14px;height:14px;flex-shrink:0;margin-top:2px}
+.paste-hint strong{font-weight:700}
+.pw-strength{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--separator-light);opacity:0;max-height:0;overflow:hidden;transition:all .25s}
+.pw-strength.show{opacity:1;max-height:30px;margin-top:10px;padding-top:10px}
+.pw-bars{display:flex;gap:4px;flex:1}
+.pw-bar{flex:1;height:4px;border-radius:2px;background:var(--separator);transition:background .25s}
+.pw-bar.weak{background:var(--red)}
+.pw-bar.fair{background:var(--orange)}
+.pw-bar.good{background:var(--teal)}
+.pw-bar.strong{background:var(--green)}
+.pw-label{font-size:11px;font-weight:600;min-width:40px;text-align:right;color:var(--fg-secondary)}
+.pw-label.weak{color:var(--red)}
+.pw-label.fair{color:var(--orange)}
+.pw-label.good{color:var(--teal)}
+.pw-label.strong{color:var(--green)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
 <div class="app">
-    <header class="header">
-        <div class="brand-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2l2.4 5.5L20 9l-4.5 3.7L17 19l-5-3-5 3 1.5-6.3L4 9l5.6-1.5z"/>
-            </svg>
+  <header class="header">
+    <div class="brand-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 5.5L20 9l-4.5 3.7L17 19l-5-3-5 3 1.5-6.3L4 9l5.6-1.5z"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>文字隐写术</h1>
+      <p>把秘密藏进看似平常的文字里</p>
+    </div>
+  </header>
+
+  <nav class="tabbar" role="tablist">
+    <div class="tabbar-inner">
+      <div class="tab-glider" id="tabGlider"></div>
+      <button class="tab-btn active" role="tab" aria-selected="true" data-tab="hide">隐藏</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="extract">提取</button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="detect">检测</button>
+    </div>
+  </nav>
+
+  <main>
+    <section class="panel active" id="pHide" role="tabpanel">
+      <div class="card">
+        <div class="field">
+          <label class="field-label" for="inCarrier">
+            <span class="field-title">载体文本<span class="field-hint">表面上显示的文字</span></span>
+            <button class="icon-btn" type="button" id="btnPasteCarrier">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              粘贴
+            </button>
+          </label>
+          <textarea id="inCarrier" rows="3" placeholder="例如：今天天气真好"></textarea>
+          <div class="field-footer">
+            <span class="field-count" id="count_inCarrier">0 字</span>
+            <button class="btn-clear" type="button" data-clear="inCarrier">清空</button>
+          </div>
         </div>
-        <div class="brand-text">
-            <h1>文字隐写术</h1>
-            <p>把秘密藏进看似平常的文字里</p>
+
+        <button class="card-row" id="rowMethod" type="button">
+          <span class="row-label">隐藏方法</span>
+          <span class="row-value" id="valMethod">标准（1 bit/字符）</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button class="card-row" id="rowSchemeHide" type="button">
+          <span class="row-label">编码方案</span>
+          <span class="row-value" id="valSchemeHide">变体方案</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button class="card-row" id="rowTextEncoding" type="button">
+          <span class="row-label">文本编码</span>
+          <span class="row-value" id="valTextEncoding">UTF-8</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button class="card-row" id="rowCompress" type="button">
+          <span class="row-label">压缩算法</span>
+          <span class="row-value" id="valCompress">自动</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+        <button class="card-row" id="rowForceCompress" type="button" aria-pressed="false">
+          <span class="row-label">即使压缩后变大也压缩</span>
+          <span class="switch-track" id="switchForce"></span>
+        </button>
+
+        <div class="field">
+          <label class="field-label" for="inPasswordHide">
+            <span class="field-title">加密密码<span class="field-hint">可选，留空则不加密</span></span>
+          </label>
+          <div class="password-wrap">
+            <input id="inPasswordHide" type="password" placeholder="输入密码以加密隐藏内容" autocomplete="off">
+            <button class="btn-eye" type="button" data-target="inPasswordHide" aria-label="切换密码可见">
+              <svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <div class="pw-strength" id="pwStrengthHide">
+            <div class="pw-bars"><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div><div class="pw-bar"></div></div>
+            <span class="pw-label" id="pwLabelHide"></span>
+          </div>
         </div>
-    </header>
 
-    <nav class="seg" role="tablist">
-        <div class="seg-slider" id="segSlider"></div>
-        <button class="seg-btn active" role="tab" aria-selected="true"  data-tab="hide">隐藏</button>
-        <button class="seg-btn" role="tab" aria-selected="false" data-tab="extract">提取</button>
-        <button class="seg-btn" role="tab" aria-selected="false" data-tab="detect">检测</button>
-    </nav>
+        <div class="field">
+          <label class="field-label" for="inSecret">
+            <span class="field-title">隐藏内容<span class="field-hint">要藏进去的信息</span></span>
+            <button class="icon-btn" type="button" id="btnPasteSecret">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              粘贴
+            </button>
+          </label>
+          <textarea id="inSecret" rows="3" placeholder="例如：这是一段秘密"></textarea>
+          <div class="field-footer">
+            <span class="field-count" id="count_inSecret">0 字</span>
+            <button class="btn-clear" type="button" data-clear="inSecret">清空</button>
+          </div>
+        </div>
+      </div>
 
-    <main>
-        <!-- ====== 隐藏 ====== -->
-        <section class="panel active" id="pHide" role="tabpanel">
-            <div class="group">
-                <div class="field">
-                    <label class="field-label" for="inCarrier">
-                        <span class="field-label-text">载体文本<span class="field-hint">表面上显示的文字</span></span>
-                        <button class="btn-paste" type="button" id="btnPasteCarrier">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            粘贴
-                        </button>
-                    </label>
-                    <textarea id="inCarrier" rows="3" placeholder="例如：今天天气真好"></textarea>
-                    <div class="field-footer">
-                        <span class="field-count" id="count_inCarrier">0 字</span>
-                        <button class="btn-clear" type="button" data-clear="inCarrier">清空</button>
-                    </div>
-                </div>
-                <button class="row" id="rowSchemeHide" type="button">
-                    <span class="row-label">编码方案</span>
-                    <span class="row-value" id="valSchemeHide">变体方案</span>
-                    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+      <div class="hint" id="compressHint" hidden></div>
+
+      <button class="btn-primary" id="btnEncode" type="button" data-loading="处理中…">生成隐写文本</button>
+
+      <div class="result" id="resEncode">
+        <div class="result-inner">
+          <div class="card">
+            <div class="result-head">
+              <span class="result-title">生成结果</span>
+              <div class="result-actions">
+                <button class="icon-btn" id="btnDownload" type="button">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  <span>下载</span>
                 </button>
-                <div class="field">
-                    <label class="field-label" for="inPasswordHide">
-                        <span class="field-label-text">加密密码<span class="field-hint">可选，留空则不加密</span></span>
-                    </label>
-                    <div class="password-wrap">
-                        <input id="inPasswordHide" type="password" placeholder="输入密码以加密隐藏内容" autocomplete="off">
-                        <button class="btn-toggle-pw" type="button" data-target="inPasswordHide" aria-label="切换密码可见">
-                            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        </button>
-                    </div>
-                    <div class="pw-strength" id="pwStrengthHide">
-                        <div class="pw-bars">
-                            <div class="pw-bar"></div>
-                            <div class="pw-bar"></div>
-                            <div class="pw-bar"></div>
-                            <div class="pw-bar"></div>
-                        </div>
-                        <span class="pw-strength-label" id="pwLabelHide"></span>
-                    </div>
-                </div>
-                <div class="field">
-                    <label class="field-label" for="inSecret">
-                        <span class="field-label-text">隐藏内容<span class="field-hint">要藏进去的信息</span></span>
-                        <button class="btn-paste" type="button" id="btnPasteSecret">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            粘贴
-                        </button>
-                    </label>
-                    <textarea id="inSecret" rows="3" placeholder="例如：这是一段秘密"></textarea>
-                    <div class="field-footer">
-                        <span class="field-count" id="count_inSecret">0 字</span>
-                        <button class="btn-clear" type="button" data-clear="inSecret">清空</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ★ 压缩能力提示 -->
-            <div class="compress-hint" id="compressHint" hidden></div>
-
-            <button class="btn-primary" id="btnEncode" type="button">生成隐写文本</button>
-
-            <div class="result-block" id="resEncode">
-                <div class="group">
-                    <div class="result-head">
-                        <span class="result-title">生成结果</span>
-                        <div class="result-actions">
-                            <button class="btn-copy" id="btnDownload" type="button">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                                <span>下载</span>
-                            </button>
-                            <button class="btn-copy" id="btnCopyEnc" type="button">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                <span id="copyLabel">复制</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="result-body" id="outEncoded"></div>
-                    <div class="result-stats" id="statsEnc"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ====== 提取 ====== -->
-        <section class="panel" id="pExtract" role="tabpanel">
-            <div class="group">
-                <div class="field">
-                    <label class="field-label" for="inPaste">
-                        <span class="field-label-text">粘贴文本<span class="field-hint">可能含有隐藏内容的文本</span></span>
-                        <div class="label-actions">
-                            <button class="btn-paste" type="button" id="btnImport">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
-                                导入
-                            </button>
-                            <button class="btn-paste" type="button" id="btnPaste">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                粘贴
-                            </button>
-                        </div>
-                    </label>
-                    <textarea id="inPaste" rows="4" placeholder="将隐写文本粘贴到这里，或点击「导入」选择 .txt 文件"></textarea>
-                    <div class="file-progress" id="fileProgress">
-                        <span class="spinner"></span>
-                        <span id="fileProgressText">读取文件中…</span>
-                    </div>
-                    <div class="field-footer">
-                        <span class="field-count" id="count_inPaste">0 字</span>
-                        <button class="btn-clear" type="button" data-clear="inPaste">清空</button>
-                    </div>
-                </div>
-                <button class="row" id="rowSchemeExtract" type="button">
-                    <span class="row-label">提取方案</span>
-                    <span class="row-value" id="valSchemeExtract">自动检测</span>
-                    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+                <button class="icon-btn" id="btnCopyEnc" type="button">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span id="copyLabel">复制</span>
                 </button>
-                <div class="field">
-                    <label class="field-label" for="inPasswordExtract">
-                        <span class="field-label-text">解密密码<span class="field-hint">如果内容已加密</span></span>
-                    </label>
-                    <div class="password-wrap">
-                        <input id="inPasswordExtract" type="password" placeholder="输入密码以解密隐藏内容" autocomplete="off">
-                        <button class="btn-toggle-pw" type="button" data-target="inPasswordExtract" aria-label="切换密码可见">
-                            <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        </button>
-                    </div>
-                </div>
+              </div>
             </div>
-            <button class="btn-primary" id="btnDecode" type="button">解析提取</button>
+            <div class="result-body" id="outEncoded"></div>
+            <div class="result-stats" id="statsEnc"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-            <div class="result-block" id="resDecode">
-                <div class="group">
-                    <div class="result-head">
-                        <span class="result-title">提取结果</span>
-                        <div class="result-actions">
-                            <button class="btn-copy" id="btnCopyDec" type="button" style="display:none">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                <span id="copyDecLabel">复制</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div id="outDecoded"></div>
-                </div>
+    <section class="panel" id="pExtract" role="tabpanel">
+      <div class="card">
+        <div class="field">
+          <label class="field-label" for="inPaste">
+            <span class="field-title">粘贴文本<span class="field-hint">可能含有隐藏内容的文本</span></span>
+            <div style="display:flex;gap:6px">
+              <button class="icon-btn" type="button" id="btnImport">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                导入
+              </button>
+              <button class="icon-btn" type="button" id="btnPaste">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                粘贴
+              </button>
             </div>
-        </section>
+          </label>
+          <textarea id="inPaste" rows="4" placeholder="将隐写文本粘贴到这里，或点击「导入」选择 .txt 文件"></textarea>
+          <div class="file-progress" id="fileProgress">
+            <span class="spinner"></span>
+            <span id="fileProgressText">读取文件中…</span>
+          </div>
+          <div class="field-footer">
+            <span class="field-count" id="count_inPaste">0 字</span>
+            <button class="btn-clear" type="button" data-clear="inPaste">清空</button>
+          </div>
+        </div>
 
-        <!-- ====== 检测 ====== -->
-        <section class="panel" id="pDetect" role="tabpanel">
-            <div class="group">
-                <div class="field">
-                    <label class="field-label" for="inDetect">
-                        <span class="field-label-text">输入文本<span class="field-hint">检测不可见字符与微符号</span></span>
-                        <button class="btn-paste" type="button" id="btnPasteDetect">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                            粘贴
-                        </button>
-                    </label>
-                    <textarea id="inDetect" rows="4" placeholder="粘贴任意文本，检测其中是否含有隐藏字符"></textarea>
-                    <div class="field-footer">
-                        <span class="field-count" id="count_inDetect">0 字</span>
-                        <button class="btn-clear" type="button" data-clear="inDetect">清空</button>
-                    </div>
-                </div>
+        <button class="card-row" id="rowSchemeExtract" type="button">
+          <span class="row-label">提取方案</span>
+          <span class="row-value" id="valSchemeExtract">自动检测</span>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <div class="field">
+          <label class="field-label" for="inPasswordExtract">
+            <span class="field-title">解密密码<span class="field-hint">如果内容已加密</span></span>
+          </label>
+          <div class="password-wrap">
+            <input id="inPasswordExtract" type="password" placeholder="输入密码以解密隐藏内容" autocomplete="off">
+            <button class="btn-eye" type="button" data-target="inPasswordExtract" aria-label="切换密码可见">
+              <svg class="eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnDecode" type="button" data-loading="处理中…">解析提取</button>
+
+      <div class="result" id="resDecode">
+        <div class="result-inner">
+          <div class="card">
+            <div class="result-head">
+              <span class="result-title">提取结果</span>
+              <div class="result-actions">
+                <button class="icon-btn" id="btnCopyDec" type="button" style="display:none">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  <span id="copyDecLabel">复制</span>
+                </button>
+              </div>
             </div>
-            <button class="btn-primary" id="btnDetect" type="button">开始检测</button>
+            <div id="outDecoded"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-            <div class="result-block" id="resDetect">
-                <div class="stats">
-                    <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总字符</div></div>
-                    <div class="stat"><div class="stat-num" id="statVisible">0</div><div class="stat-label">可见字符</div></div>
-                    <div class="stat"><div class="stat-num" id="statHidden">0</div><div class="stat-label">隐藏字符</div></div>
-                </div>
-                <div class="tags" id="typeList"></div>
-                <div class="group">
-                    <div class="viz-title">
-                        <span>字符可视化</span>
-                        <div class="viz-title-actions">
-                            <button class="btn-paste" type="button" id="btnCopyReport" style="display:none">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                复制报告
-                            </button>
-                        </div>
-                    </div>
-                    <div class="viz" id="vizText"></div>
-                </div>
+    <section class="panel" id="pDetect" role="tabpanel">
+      <div class="card">
+        <div class="field">
+          <label class="field-label" for="inDetect">
+            <span class="field-title">输入文本<span class="field-hint">检测不可见字符与微符号</span></span>
+            <button class="icon-btn" type="button" id="btnPasteDetect">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              粘贴
+            </button>
+          </label>
+          <textarea id="inDetect" rows="4" placeholder="粘贴任意文本，检测其中是否含有隐藏字符"></textarea>
+          <div class="field-footer">
+            <span class="field-count" id="count_inDetect">0 字</span>
+            <button class="btn-clear" type="button" data-clear="inDetect">清空</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="btnDetect" type="button" data-loading="检测中…">开始检测</button>
+
+      <div class="result" id="resDetect">
+        <div class="result-inner">
+          <div class="metrics">
+            <div class="metric"><div class="stat-num" id="statTotal">0</div><div class="metric-label">总字符</div></div>
+            <div class="metric"><div class="stat-num" id="statVisible">0</div><div class="metric-label">可见字符</div></div>
+            <div class="metric"><div class="stat-num hl" id="statHidden">0</div><div class="metric-label">隐藏字符</div></div>
+          </div>
+          <div class="tags" id="typeList"></div>
+          <div class="card viz-wrap">
+            <div class="result-head">
+              <span class="result-title">字符可视化</span>
+              <button class="icon-btn" id="btnCopyReport" type="button" style="display:none">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2.5"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制报告
+              </button>
             </div>
-        </section>
-    </main>
+            <div class="viz" id="vizText"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-    <footer class="foot">
-        <span>基于 Unicode 不可见字符与微点符号<br>支持 AES-GCM 强加密 · 动态压缩 · 自动识别加密状态</span>
-    </footer>
+  <footer class="foot">
+    <span>Unicode 不可见字符 · AES-GCM 加密 · Brotli / ZSTD / gzip / deflate-raw / 不压缩 · GBK 编码 · 4 种密度（1/3/4/8 bit）</span>
+  </footer>
 </div>
 
 <button class="btn-top" id="btnTop" type="button" aria-label="回到顶部">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
 </button>
 
 <div class="sheet-overlay" id="sheetOverlay" aria-hidden="true"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sheetTitle">
-    <div class="sheet-handle" aria-hidden="true"></div>
-    <div class="sheet-title" id="sheetTitle">选择方案</div>
-    <div class="sheet-body" id="sheetBody"></div>
-    <button class="sheet-cancel" id="sheetCancel" type="button">取消</button>
+  <div class="sheet-handle" aria-hidden="true"></div>
+  <div class="sheet-title" id="sheetTitle">选择方案</div>
+  <div class="sheet-body" id="sheetBody"></div>
+  <button class="sheet-cancel" id="sheetCancel" type="button">取消</button>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -980,100 +471,149 @@
 'use strict';
 
 var SCHEMES=[
-    { id:'variant',  name:'变体方案', zero:'\uFE00', one:'\uFE01',
-      desc:'U+FE00 / U+FE01',
-      note:'标准变体选择符 · 无字形不渲染 · 常规零宽过滤不涉及' },
-    { id:'microdot', name:'微点方案', zero:'\u0387', one:'\u2027',
-      desc:'U+0387 / U+2027',
-      note:'两种视觉一致的极小圆点 · 不属于零宽字符 · 不会被过滤清除' },
-    { id:'stealth',  name:'隐蔽方案', zero:'\u200B', one:'\u200D',
-      desc:'U+200B / U+200D', note:'连接符变体 · 规避基础过滤' },
-    { id:'safe',     name:'安全方案', zero:'\u2060', one:'\u2061',
-      desc:'U+2060 / U+2061', note:'格式字符 · 多数平台不过滤' },
-    { id:'deep',     name:'深度隐蔽', zero:'\u2062', one:'\u2063',
-      desc:'U+2062 / U+2063', note:'数学不可见运算符 · 检测罕见' },
-    { id:'extreme',  name:'极端方案', zero:'\u2064', one:'\u034F',
-      desc:'U+2064 / U+034F', note:'跨 Unicode 区块混用 · 隐蔽等级最高' }
+  { id:'variant',  name:'变体方案', zero:'\uFE00', one:'\uFE01', desc:'U+FE00 / U+FE01', note:'标准变体选择符 · 无字形不渲染' },
+  { id:'microdot', name:'微点方案', zero:'\u0387', one:'\u2027', desc:'U+0387 / U+2027', note:'两种视觉一致的极小圆点' },
+  { id:'stealth',  name:'隐蔽方案', zero:'\u200B', one:'\u200D', desc:'U+200B / U+200D', note:'连接符变体 · 规避基础过滤' },
+  { id:'safe',     name:'安全方案', zero:'\u2060', one:'\u2061', desc:'U+2060 / U+2061', note:'格式字符 · 多数平台不过滤' },
+  { id:'deep',     name:'深度隐蔽', zero:'\u2062', one:'\u2063', desc:'U+2062 / U+2063', note:'数学不可见运算符 · 检测罕见' },
+  { id:'extreme',  name:'极端方案', zero:'\u2064', one:'\u034F', desc:'U+2064 / U+034F', note:'跨 Unicode 区块混用' }
+];
+var EXTRACT_OPTIONS=[{ id:'auto', name:'自动检测', desc:'依次尝试全部方法', note:'自动识别加密、压缩、密度' }].concat(SCHEMES);
+
+var COMPRESS_OPTIONS=[
+  { id:'auto',         name:'自动',         desc:'实测竞选 · 最小输出',           note:'本地 deflate-raw/gzip 零成本必跑；载荷 ≥128 B 加跑 Brotli/ZSTD，谁小用谁' },
+  { id:'brotli',       name:'Brotli',       desc:'外部库 · 长文本压缩率最高',     note:'统一走外部库（约 400KB）· 长文本首选' },
+  { id:'zstd',         name:'ZSTD',         desc:'外部库 · 压缩率与速度均衡',     note:'原生不支持时自动加载外部库（约 500KB）' },
+  { id:'gzip',         name:'gzip',         desc:'原生 · 速度最快',               note:'使用浏览器原生 gzip，含 18 字节头部' },
+  { id:'deflate-raw',  name:'deflate-raw',  desc:'原生 · 无头无校验 · 小文本首选', note:'浏览器原生 · 剥掉 zlib 头与 Adler-32 校验 · 小文本比 gzip 更省' },
+  { id:'none',         name:'不压缩',        desc:'完全关闭压缩',                  note:'直接嵌入原始字节 · 解码最快 · 无任何冗余' }
 ];
 
-var EXTRACT_OPTIONS=[
-    { id:'auto', name:'自动检测', desc:'依次尝试全部方案', note:'自动识别加密和压缩状态' }
-].concat(SCHEMES);
+var METHOD_OPTIONS=[
+  { id:'standard',    name:'标准（1 bit/字符）',        desc:'2 种符号 · 8 字符/字节',   note:'使用「编码方案」的字符集，兼容性最好' },
+  { id:'base64',      name:'Base64（6 bit/字符对）',    desc:'8×8 字符对 · 2.67 字符/字节', note:'低位组+高位组配对，64 种状态，完全避开冷门扩展区' },
+  { id:'highdensity', name:'高压缩比（4 bit/字符）',     desc:'16 字符 · 2 字符/字节',   note:'U+FE00~U+FE0F，同样信息量字符数减半' },
+  { id:'extreme',     name:'极高压缩比（8 bit/字符）',   desc:'256 字符 · 1 字符/字节',  note:'U+FE00~FE0F + U+E0100~E01EF，最省字符数但兼容性稍差' }
+];
+
+var TEXT_ENCODING_OPTIONS=[
+  { id:'utf8', name:'UTF-8', desc:'通用编码 · 中文 3 字节', note:'兼容所有语言与 emoji' },
+  { id:'gbk',  name:'GBK',   desc:'简体中文编码 · 中文 2 字节', note:'首次使用需加载外部库（约 100KB）。仅支持简体中文' }
+];
 
 var ZW_TYPES=[
-    { char:'\u200B', name:'零宽空格',     code:'U+200B', color:'#0E8A8A' },
-    { char:'\u200C', name:'零宽不连接',   code:'U+200C', color:'#B25000' },
-    { char:'\u200D', name:'零宽连接',     code:'U+200D', color:'#8B5CF6' },
-    { char:'\uFEFF', name:'零宽不换行',   code:'U+FEFF', color:'#D12D2D' },
-    { char:'\u2060', name:'单词连接符',   code:'U+2060', color:'#0A6EBD' },
-    { char:'\u2061', name:'函数应用',     code:'U+2061', color:'#B3347A' },
-    { char:'\u2062', name:'隐形乘号',     code:'U+2062', color:'#A16207' },
-    { char:'\u2063', name:'隐形逗号',     code:'U+2063', color:'#2F8F46' },
-    { char:'\u2064', name:'隐形加号',     code:'U+2064', color:'#8A6A45' },
-    { char:'\u034F', name:'组合连接符',   code:'U+034F', color:'#5B5BD6' },
-    { char:'\uFE00', name:'变体选择符 1', code:'U+FE00', color:'#0E7490' },
-    { char:'\uFE01', name:'变体选择符 2', code:'U+FE01', color:'#7E22CE' },
-    { char:'\u0387', name:'希腊间隔点',   code:'U+0387', color:'#9A3412' },
-    { char:'\u2027', name:'连字分隔点',   code:'U+2027', color:'#57606E' }
+  { char:'\u200B', name:'零宽空格',     code:'U+200B', color:'#0E8A8A' },
+  { char:'\u200C', name:'零宽不连接',   code:'U+200C', color:'#B25000' },
+  { char:'\u200D', name:'零宽连接',     code:'U+200D', color:'#8B5CF6' },
+  { char:'\uFEFF', name:'零宽不换行',   code:'U+FEFF', color:'#D12D2D' },
+  { char:'\u2060', name:'单词连接符',   code:'U+2060', color:'#0A6EBD' },
+  { char:'\u2061', name:'函数应用',     code:'U+2061', color:'#B3347A' },
+  { char:'\u2062', name:'隐形乘号',     code:'U+2062', color:'#A16207' },
+  { char:'\u2063', name:'隐形逗号',     code:'U+2063', color:'#2F8F46' },
+  { char:'\u2064', name:'隐形加号',     code:'U+2064', color:'#8A6A45' },
+  { char:'\u034F', name:'组合连接符',   code:'U+034F', color:'#5B5BD6' },
+  { char:'\uFE00', name:'变体选择符 1', code:'U+FE00', color:'#0E7490' },
+  { char:'\uFE01', name:'变体选择符 2', code:'U+FE01', color:'#7E22CE' },
+  { char:'\u0387', name:'希腊间隔点',   code:'U+0387', color:'#9A3412' },
+  { char:'\u2027', name:'连字分隔点',   code:'U+2027', color:'#57606E' }
 ];
 var ZW_MAP={}, ZW_ALL_SET=new Set();
 ZW_TYPES.forEach(function(t){ ZW_MAP[t.char]=t; ZW_ALL_SET.add(t.char); });
+
+var HEX_CHARS=[
+  '\uFE00','\uFE01','\uFE02','\uFE03','\uFE04','\uFE05','\uFE06','\uFE07',
+  '\uFE08','\uFE09','\uFE0A','\uFE0B','\uFE0C','\uFE0D','\uFE0E','\uFE0F'
+];
+var HEX_CHAR_MAP={};
+HEX_CHARS.forEach(function(ch,i){ HEX_CHAR_MAP[ch]=i; });
+
+var DENSE256=[];
+(function(){
+  for(var i=0xFE00;i<=0xFE0F;i++)DENSE256.push(String.fromCodePoint(i));
+  for(var j=0xE0100;j<=0xE01EF;j++)DENSE256.push(String.fromCodePoint(j));
+})();
+var DENSE256_MAP={};
+DENSE256.forEach(function(ch,i){ DENSE256_MAP[ch]=i; });
+
+var BASE64_LOW=['\u200B','\u200C','\u200D','\u2060','\u2061','\u2062','\u2063','\u2064'];
+var BASE64_HIGH=['\uFE00','\uFE01','\uFE02','\uFE03','\uFE04','\uFE05','\uFE06','\uFE07'];
+var BASE64_LOW_MAP={}, BASE64_HIGH_MAP={};
+BASE64_LOW.forEach(function(ch,i){ BASE64_LOW_MAP[ch]=i; });
+BASE64_HIGH.forEach(function(ch,i){ BASE64_HIGH_MAP[ch]=i; });
+var BASE64_LOW_SET=new Set(BASE64_LOW);
+var BASE64_HIGH_SET=new Set(BASE64_HIGH);
+
+function isHexChar(ch){ if(!ch)return false; var cp=ch.codePointAt(0); return cp>=0xFE00&&cp<=0xFE0F; }
+function isExtremeExclusiveChar(ch){ if(!ch)return false; var cp=ch.codePointAt(0); return cp>=0xE0100&&cp<=0xE01EF; }
+function isBase64LowChar(ch){ return BASE64_LOW_SET.has(ch); }
+function isBase64HighChar(ch){ return BASE64_HIGH_SET.has(ch); }
 
 var VIZ_LIMIT=3000;
 var ENCODE_CHAR_LIMIT=100000;
 var PASSWORD_MAX_LEN=100;
 
-var MARK_ENC=0xFF;
-var MARK_ENC_GZ=0xFE;
-var MARK_ENC_BR=0xFD;
-var MARK_PLAIN_GZ=0x01;
-var MARK_PLAIN_BR=0x02;
+var MARK_V2=0xF0;
+var MARK_ENC=0xFF, MARK_ENC_GZ=0xFE, MARK_ENC_BR=0xFD, MARK_ENC_ZS=0xFC;
+var MARK_PLAIN_GZ=0x01, MARK_PLAIN_BR=0x02, MARK_PLAIN_ZS=0x03;
 
-var SALT_LEN=16;
-var IV_LEN=12;
-var TAG_LEN=16;
-var PBKDF2_ITER=100000;
-
+var SALT_LEN=16, IV_LEN=12, TAG_LEN=16, PBKDF2_ITER=100000;
 var COMPRESS_TRY_MIN_BYTES=20;
-
+/* 自动档阈值：载荷（编码后字节数）达到该值才值得为 Brotli/ZSTD 加载外部库；
+   低于该值只跑零成本的本地算法，避免为几十字节的收益先下载约 900KB 的 wasm。
+   外部库一旦在会话中加载过，之后任何大小都会参选。 */
+var AUTO_EXTERNAL_MIN_BYTES=128;
 var INPUT_DEBOUNCE_MS=80;
 var MAX_ZW_PER_CHAR=1000;
 var DOWNLOAD_THRESHOLD=200000;
 var COPY_MAX_LENGTH=200000;
 var MAX_FILE_SIZE=10*1024*1024;
 
-/* ══════════ 压缩能力检测 ══════════ */
-var compressionSupport=(function(){
-    var r={ brotli:false, gzip:false };
-    if(typeof CompressionStream==='undefined'||typeof DecompressionStream==='undefined')return r;
-    try{
-        new CompressionStream('brotli');
-        new DecompressionStream('brotli');
-        r.brotli=true;
-    }catch(e){}
-    try{
-        new CompressionStream('gzip');
-        new DecompressionStream('gzip');
-        r.gzip=true;
-    }catch(e){}
-    return r;
+/* Brotli 外部库来源（均已通过浏览器实测：加载 → 压缩 → 解压回环）。
+   注意：esm.sh 对 brotli-wasm@3 的打包有 bug——wasm 实例化 glue 丢失，
+   模块校验能过、但一调用 compress 就报 "(void 0) is not a function"，故整体弃用 esm.sh。
+   jsDelivr +esm 为整包（单次请求）；unpkg / jsDelivr 原始 web 入口为多文件直载。 */
+var BROTLI_SOURCES=[
+  'https://cdn.jsdelivr.net/npm/brotli-wasm@3/+esm',
+  'https://unpkg.com/brotli-wasm@3/index.web.js',
+  'https://cdn.jsdelivr.net/npm/brotli-wasm@3/index.web.js'
+];
+/* ZSTD 外部库来源（均已实测回环通过）。
+   旧版写死的 @bokuweb/zstd-wasm@0.0.21 稳定版在 npm 上从未发布（仅有 0.0.21-alpha.x，
+   下一个稳定版为 0.0.22），五个旧地址全部 404；现固定到实测可用的 0.0.27。
+   jsDelivr +esm 会把 new URL('./zstd.wasm', import.meta.url) 重写为包内真实路径；
+   unpkg 对无后缀相对导入返回 301 重定向，因此原始 dist/web 入口也可直接 import。 */
+var ZSTD_SOURCES=[
+  'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.27/+esm',
+  'https://esm.sh/@bokuweb/zstd-wasm@0.0.27',
+  'https://unpkg.com/@bokuweb/zstd-wasm@0.0.27/dist/web/index.web.js'
+];
+var ICONV_SOURCES=[
+  'https://esm.sh/iconv-lite@0.6.3?bundle',
+  'https://cdn.jsdelivr.net/npm/iconv-lite@0.6.3/+esm',
+  'https://unpkg.com/iconv-lite@0.6.3/+esm'
+];
+
+var nativeSupport=(function(){
+  var r={ brotli:false, gzip:false, zstd:false, deflateRaw:false };
+  if(typeof CompressionStream==='undefined'||typeof DecompressionStream==='undefined')return r;
+  try{ new CompressionStream('gzip'); new DecompressionStream('gzip'); r.gzip=true; }catch(e){}
+  r.brotli=false;
+  try{ new CompressionStream('zstd'); new DecompressionStream('zstd'); r.zstd=true; }catch(e){}
+  try{ new CompressionStream('deflate-raw'); new DecompressionStream('deflate-raw'); r.deflateRaw=true; }catch(e){}
+  return r;
 })();
 
-function pickCompressionAlgo(){
-    if(compressionSupport.brotli)return 'brotli';
-    if(compressionSupport.gzip)return 'gzip';
-    return null;
-}
-var compressionDisplay=(function(){
-    var algo=pickCompressionAlgo();
-    if(algo==='brotli')return 'Brotli';
-    if(algo==='gzip')return 'gzip';
-    return '';
-})();
+var compressPref='auto';
+var forceCompress=false;
+var textEncodingPref='utf8';
+var methodPref='standard';
+var externalBrotli=null, externalBrotliLoading=null;
+var externalZstd=null, externalZstdLoading=null;
+var externalIconv=null, externalIconvLoading=null;
 
 var $=function(id){ return document.getElementById(id); };
-var segBtns=document.querySelectorAll('.seg-btn');
-var segSlider=$('segSlider');
+var tabBtns=document.querySelectorAll('.tab-btn');
+var tabGlider=$('tabGlider');
 var panels=document.querySelectorAll('.panel');
 
 var inCarrier=$('inCarrier'), inSecret=$('inSecret'), btnEncode=$('btnEncode');
@@ -1097,1187 +637,1675 @@ var statTotal=$('statTotal'), statVisible=$('statVisible'), statHidden=$('statHi
 var typeList=$('typeList'), vizText=$('vizText');
 var btnCopyReport=$('btnCopyReport');
 
-var sheetOverlay=$('sheetOverlay'), sheet=$('sheet'),
-    sheetTitle=$('sheetTitle'), sheetBody=$('sheetBody'), sheetCancel=$('sheetCancel');
+var sheetOverlay=$('sheetOverlay'), sheet=$('sheet');
+var sheetTitle=$('sheetTitle'), sheetBody=$('sheetBody'), sheetCancel=$('sheetCancel');
 var toastEl=$('toast');
 var btnTop=$('btnTop');
 
 var TAB_IDX={hide:0,extract:1,detect:2};
 var TAB_PANEL={hide:'pHide',extract:'pExtract',detect:'pDetect'};
-
-var hideSchemeIdx=0;
-var extractSchemeIdx=0;
-
+var hideSchemeIdx=0, extractSchemeIdx=0;
 var cryptoAvailable=!!(window.crypto&&window.crypto.subtle&&window.TextEncoder&&window.TextDecoder);
 
-/* ══════════ ★ 压缩能力提示 ══════════ */
-(function initCompressHint(){
-    if(!compressHint)return;
-    var infoSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
-    if(compressionSupport.brotli){
-        compressHint.classList.add('ok');
-        compressHint.innerHTML=infoSvg+
-            '<span>当前浏览器支持 <strong>Brotli</strong> 压缩，比 gzip 更高效。长文本将自动压缩，只有更小才会启用。</span>';
-        compressHint.hidden=false;
-    }else if(compressionSupport.gzip){
-        compressHint.innerHTML=infoSvg+
-            '<span>当前浏览器仅支持 <strong>gzip</strong> 压缩。'+
-            'Brotli 需要 Chrome 125+ / Safari 18+ / Firefox 129+，升级浏览器可获得更高压缩率。</span>';
-        compressHint.hidden=false;
-    }else{
-        compressHint.innerHTML=infoSvg+
-            '<span>当前浏览器不支持压缩 API，隐藏内容将<strong>不压缩直接嵌入</strong>。</span>';
-        compressHint.hidden=false;
-    }
-})();
-
-/* ══════════ 通用压缩 / 解压 ══════════ */
-function compressBytes(bytes, algo){
-    if(!algo)return Promise.reject(new Error('no-compression-support'));
-    try{
-        var cs=new CompressionStream(algo);
-        var writer=cs.writable.getWriter();
-        writer.write(bytes);
-        writer.close();
-        return collectStream(cs.readable);
-    }catch(e){ return Promise.reject(e); }
+function multiSourceImport(sources, validate, name){
+  var list=sources.slice();
+  function tryNext(){
+    if(list.length===0)return Promise.reject(new Error(name+' 所有 CDN 均不可用'));
+    var url=list.shift();
+    console.log('[CDN] 尝试加载 '+name+'：'+url);
+    return import(/* @vite-ignore */ url)
+      .then(function(mod){
+        var candidate=mod;
+        if(mod && mod.default!==undefined && mod.default!==null)candidate=mod.default;
+        return Promise.resolve(candidate);
+      })
+      .then(function(api){ return validate(api); })
+      .catch(function(err){
+        var msg=err&&err.message?err.message:String(err);
+        console.warn('[CDN] '+name+' 加载失败 '+url+'：'+msg);
+        return tryNext();
+      });
+  }
+  return tryNext();
 }
-function decompressBytes(bytes, algo){
-    if(!algo)return Promise.reject(new Error('no-compression-support'));
-    try{
-        var ds=new DecompressionStream(algo);
-        var writer=ds.writable.getWriter();
-        writer.write(bytes);
-        writer.close();
-        return collectStream(ds.readable);
-    }catch(e){ return Promise.reject(e); }
+
+function loadExternalBrotli(){
+  if(externalBrotli)return Promise.resolve(externalBrotli);
+  if(externalBrotliLoading)return externalBrotliLoading;
+  externalBrotliLoading=multiSourceImport(BROTLI_SOURCES, function(b){
+    if(!b||typeof b.compress!=='function'||typeof b.decompress!=='function')throw new Error('缺少 compress/decompress');
+    return brotliSmokeTest(b);
+  },'Brotli').then(function(b){
+    externalBrotli=b;
+    try{ console.log('[Brotli] 模块就绪'); }catch(e){}
+    updateCompressHint();
+    return b;
+  }).catch(function(e){ externalBrotliLoading=null; throw e; });
+  return externalBrotliLoading;
+}
+
+function loadExternalZstd(){
+  if(externalZstd)return Promise.resolve(externalZstd);
+  if(externalZstdLoading)return externalZstdLoading;
+  externalZstdLoading=multiSourceImport(ZSTD_SOURCES, function(api){
+    if(!api||typeof api!=='object')throw new Error('模块导出不是对象');
+    var init=api.init, cf=api.compress, df=api.decompress;
+    if((typeof cf!=='function'||typeof df!=='function')&&api.default){
+      init=init||api.default.init; cf=cf||api.default.compress; df=df||api.default.decompress;
+    }
+    if(typeof init!=='function')throw new Error('缺少 init');
+    if(typeof cf!=='function'||typeof df!=='function')throw new Error('缺少 compress/decompress');
+    return init().then(function(){
+      return zstdSmokeTest(cf,df).then(function(){ return {compress:cf,decompress:df}; });
+    });
+  },'ZSTD').then(function(a){ externalZstd=a; updateCompressHint(); return a; })
+    .catch(function(e){ externalZstdLoading=null; throw e; });
+  return externalZstdLoading;
+}
+
+function loadExternalIconv(){
+  if(externalIconv)return Promise.resolve(externalIconv);
+  if(externalIconvLoading)return externalIconvLoading;
+  externalIconvLoading=multiSourceImport(ICONV_SOURCES, function(iconv){
+    if(!iconv||typeof iconv.encode!=='function'||typeof iconv.decode!=='function')throw new Error('iconv 缺少 encode/decode');
+    return iconv;
+  },'iconv').then(function(i){ externalIconv=i; updateCompressHint(); return i; })
+    .catch(function(e){ externalIconvLoading=null; throw e; });
+  return externalIconvLoading;
+}
+
+function gbkEncode(text){
+  return loadExternalIconv().then(function(iconv){
+    var buf=iconv.encode(text,'gbk');
+    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  });
+}
+function gbkDecode(bytes){
+  try{ return Promise.resolve(new TextDecoder('gbk',{fatal:true}).decode(bytes)); }
+  catch(e){
+    return loadExternalIconv().then(function(iconv){
+      try{ return iconv.decode(bytes,'gbk'); }catch(e2){ return null; }
+    });
+  }
+}
+
+function coerceToUint8Array(out, label){
+  if(out instanceof Uint8Array)return out;
+  if(out instanceof ArrayBuffer)return new Uint8Array(out);
+  if(out && out.buffer instanceof ArrayBuffer){
+    return new Uint8Array(out.buffer, out.byteOffset||0, out.byteLength||out.length||0);
+  }
+  if(out && typeof out.length==='number'){
+    var arr=new Uint8Array(out.length);
+    for(var i=0;i<out.length;i++)arr[i]=out[i]&0xFF;
+    return arr;
+  }
+  throw new Error(label+' 返回类型异常：'+Object.prototype.toString.call(out));
+}
+
+/* ══════════ 外部库冒烟测试 ══════════
+   仅检查「有没有 compress/decompress 函数」是不够的：esm.sh 对 brotli-wasm 的坏构建
+   函数存在但 wasm 实例化 glue 丢失，一调用就抛 "(void 0) is not a function"。
+   因此在接受任何一个外部库之前，先用极小样本跑一次压缩→解压回环，坏构建会被直接跳过。 */
+var SMOKE_SAMPLE=new Uint8Array([0x73,0x74,0x65,0x67,0x6F,0x5F,0x7A,0x77]); // "stego_zw"
+function smokeRoundtrip(compressFn, decompressFn, label){
+  var c;
+  try{ c=compressFn(SMOKE_SAMPLE); }
+  catch(syncErr){ return Promise.reject(syncErr); }
+  return Promise.resolve(c).then(function(cmp){
+    var cb=coerceToUint8Array(cmp, label+' 冒烟测试');
+    return Promise.resolve(decompressFn(cb));
+  }).then(function(back){
+    var bb=coerceToUint8Array(back, label+' 冒烟测试');
+    if(bb.length!==SMOKE_SAMPLE.length)throw new Error(label+' 冒烟测试失败：解压长度不一致');
+    for(var i=0;i<SMOKE_SAMPLE.length;i++){
+      if(bb[i]!==SMOKE_SAMPLE[i])throw new Error(label+' 冒烟测试失败：解压内容不一致');
+    }
+  });
+}
+function brotliSmokeTest(b){
+  return smokeRoundtrip(function(x){ return b.compress(x); }, function(x){ return b.decompress(x); }, 'Brotli')
+    .then(function(){ return b; });
+}
+function zstdSmokeTest(cf, df){
+  return smokeRoundtrip(function(x){ return cf(x); }, function(x){ return df(x); }, 'ZSTD');
+}
+
+function compressNative(bytes, algo){
+  try{
+    var cs=new CompressionStream(algo);
+    var writer=cs.writable.getWriter();
+    writer.write(bytes); writer.close();
+    return collectStream(cs.readable);
+  }catch(e){ return Promise.reject(e); }
+}
+function decompressNative(bytes, algo){
+  try{
+    var ds=new DecompressionStream(algo);
+    var writer=ds.writable.getWriter();
+    writer.write(bytes); writer.close();
+    return collectStream(ds.readable);
+  }catch(e){ return Promise.reject(e); }
 }
 function collectStream(readable){
-    var reader=readable.getReader();
-    var chunks=[];
-    var total=0;
-    function pump(){
-        return reader.read().then(function(result){
-            if(result.done){
-                var out=new Uint8Array(total);
-                var offset=0;
-                for(var i=0;i<chunks.length;i++){
-                    out.set(chunks[i], offset);
-                    offset+=chunks[i].length;
-                }
-                return out;
-            }
-            chunks.push(result.value);
-            total+=result.value.length;
-            return pump();
-        });
-    }
-    return pump();
-}
-
-/* ══════════ 加密模块 ══════════ */
-function deriveKey(password, salt){
-    var pwBytes=new TextEncoder().encode(password);
-    return crypto.subtle.importKey(
-        'raw', pwBytes, { name:'PBKDF2' }, false, ['deriveKey']
-    ).then(function(baseKey){
-        return crypto.subtle.deriveKey(
-            { name:'PBKDF2', salt:salt, iterations:PBKDF2_ITER, hash:'SHA-256' },
-            baseKey,
-            { name:'AES-GCM', length:256 },
-            false,
-            ['encrypt','decrypt']
-        );
-    });
-}
-function encryptBytes(plainBytes, password, marker){
-    if(marker===undefined)marker=MARK_ENC;
-    var salt=crypto.getRandomValues(new Uint8Array(SALT_LEN));
-    var iv=crypto.getRandomValues(new Uint8Array(IV_LEN));
-    return deriveKey(password, salt).then(function(key){
-        return crypto.subtle.encrypt({ name:'AES-GCM', iv:iv }, key, plainBytes);
-    }).then(function(cipherBuf){
-        var cipher=new Uint8Array(cipherBuf);
-        var out=new Uint8Array(1+SALT_LEN+IV_LEN+cipher.length);
-        out[0]=marker;
-        out.set(salt, 1);
-        out.set(iv, 1+SALT_LEN);
-        out.set(cipher, 1+SALT_LEN+IV_LEN);
+  var reader=readable.getReader();
+  var chunks=[], total=0;
+  function pump(){
+    return reader.read().then(function(result){
+      if(result.done){
+        var out=new Uint8Array(total), offset=0;
+        for(var i=0;i<chunks.length;i++){ out.set(chunks[i], offset); offset+=chunks[i].length; }
         return out;
+      }
+      chunks.push(result.value); total+=result.value.length;
+      return pump();
     });
-}
-function decryptBytes(data, password){
-    if(data.length < SALT_LEN+IV_LEN+TAG_LEN)return Promise.resolve(null);
-    var salt=data.slice(0, SALT_LEN);
-    var iv=data.slice(SALT_LEN, SALT_LEN+IV_LEN);
-    var cipher=data.slice(SALT_LEN+IV_LEN);
-    return deriveKey(password, salt).then(function(key){
-        return crypto.subtle.decrypt({ name:'AES-GCM', iv:iv }, key, cipher);
-    }).then(function(plainBuf){
-        return new Uint8Array(plainBuf);
-    }).catch(function(){ return null; });
+  }
+  return pump();
 }
 
-/* ══════════ 工具函数 ══════════ */
-function escapeHtml(s){
-    var d=document.createElement('div');
-    d.textContent=s; return d.innerHTML;
+function doCompress(bytes, algo){
+  if(!algo)return Promise.reject(new Error('no-algo'));
+  if(algo==='gzip'){
+    if(!nativeSupport.gzip)return Promise.reject(new Error('no-gzip'));
+    return compressNative(bytes,'gzip');
+  }
+  if(algo==='deflate-raw'){
+    if(!nativeSupport.deflateRaw)return Promise.reject(new Error('no-deflate-raw'));
+    return compressNative(bytes,'deflate-raw');
+  }
+  if(algo==='brotli'){
+    return loadExternalBrotli().then(function(b){
+      if(!b||typeof b.compress!=='function')throw new Error('Brotli 模块未就绪');
+      var result;
+      try{ result=b.compress(bytes); }
+      catch(syncErr){ return Promise.reject(syncErr); }
+      return Promise.resolve(result).then(function(out){
+        return coerceToUint8Array(out, 'Brotli 压缩');
+      });
+    });
+  }
+  if(algo==='zstd'){
+    if(nativeSupport.zstd)return compressNative(bytes,'zstd');
+    return loadExternalZstd().then(function(z){
+      var result=z.compress(bytes);
+      return Promise.resolve(result).then(function(out){
+        return coerceToUint8Array(out, 'ZSTD 压缩');
+      });
+    });
+  }
+  return Promise.reject(new Error('unknown-algo'));
 }
+function doDecompress(bytes, algo){
+  if(algo==='gzip'){
+    if(!nativeSupport.gzip)return Promise.reject(new Error('no-gzip'));
+    return decompressNative(bytes,'gzip');
+  }
+  if(algo==='deflate-raw'){
+    if(!nativeSupport.deflateRaw)return Promise.reject(new Error('no-deflate-raw'));
+    return decompressNative(bytes,'deflate-raw');
+  }
+  if(algo==='brotli'){
+    return loadExternalBrotli().then(function(b){
+      if(!b||typeof b.decompress!=='function')throw new Error('Brotli 模块未就绪');
+      var result;
+      try{ result=b.decompress(bytes); }
+      catch(syncErr){ return Promise.reject(syncErr); }
+      return Promise.resolve(result).then(function(out){
+        return coerceToUint8Array(out, 'Brotli 解压');
+      });
+    });
+  }
+  if(algo==='zstd'){
+    if(nativeSupport.zstd)return decompressNative(bytes,'zstd');
+    return loadExternalZstd().then(function(z){
+      var result=z.decompress(bytes);
+      return Promise.resolve(result).then(function(out){
+        return coerceToUint8Array(out, 'ZSTD 解压');
+      });
+    });
+  }
+  return Promise.reject(new Error('unknown-algo'));
+}
+
+function resolveAlgoForEncode(){
+  if(compressPref==='none')return null;
+  if(compressPref==='deflate-raw')return nativeSupport.deflateRaw?'deflate-raw':null;
+  if(compressPref==='gzip')return nativeSupport.gzip?'gzip':null;
+  if(compressPref==='brotli')return 'brotli';
+  if(compressPref==='zstd')return 'zstd';
+  return 'auto';
+}
+function algoDisplayName(algo){
+  if(algo==='auto')return '自动';
+  if(algo==='brotli')return 'Brotli';
+  if(algo==='zstd')return 'ZSTD';
+  if(algo==='gzip')return 'gzip';
+  if(algo==='deflate-raw')return 'deflate-raw';
+  return '';
+}
+/* 仅用于容量预估的压缩率经验值；真实压缩由 encodePayload 实测竞选决定 */
+function estimateCompressRatio(algo){
+  if(algo==='brotli')return 0.45;
+  if(algo==='zstd')return 0.42;
+  if(algo==='gzip')return 0.60;
+  if(algo==='deflate-raw')return 0.64;
+  if(!algo||algo==='none')return 1.0;
+  /* auto：本会话已加载过外部库就按 Brotli 估，否则按原生 deflate-raw 估 */
+  return (externalBrotli||externalZstd)?0.45:0.60;
+}
+function algoNative(algo){
+  if(algo==='brotli')return nativeSupport.brotli;
+  if(algo==='zstd')return nativeSupport.zstd;
+  if(algo==='gzip')return nativeSupport.gzip;
+  if(algo==='deflate-raw')return nativeSupport.deflateRaw;
+  return false;
+}
+
+function deriveKey(password, salt){
+  var pwBytes=new TextEncoder().encode(password);
+  return crypto.subtle.importKey('raw',pwBytes,{name:'PBKDF2'},false,['deriveKey'])
+    .then(function(baseKey){
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt:salt,iterations:PBKDF2_ITER,hash:'SHA-256'},baseKey,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+    });
+}
+function encryptRaw(plainBytes, password){
+  var salt=crypto.getRandomValues(new Uint8Array(SALT_LEN));
+  var iv=crypto.getRandomValues(new Uint8Array(IV_LEN));
+  return deriveKey(password, salt).then(function(key){
+    return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,plainBytes);
+  }).then(function(cipherBuf){
+    var cipher=new Uint8Array(cipherBuf);
+    var out=new Uint8Array(SALT_LEN+IV_LEN+cipher.length);
+    out.set(salt,0); out.set(iv,SALT_LEN); out.set(cipher,SALT_LEN+IV_LEN);
+    return out;
+  });
+}
+function decryptRaw(data, password){
+  if(data.length < SALT_LEN+IV_LEN+TAG_LEN)return Promise.resolve(null);
+  var salt=data.slice(0,SALT_LEN);
+  var iv=data.slice(SALT_LEN,SALT_LEN+IV_LEN);
+  var cipher=data.slice(SALT_LEN+IV_LEN);
+  return deriveKey(password,salt).then(function(key){
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,cipher);
+  }).then(function(plainBuf){ return new Uint8Array(plainBuf); })
+    .catch(function(){ return null; });
+}
+
+function escapeHtml(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function copyText(str){
-    if(!str)return Promise.resolve(false);
-    if(str.length>COPY_MAX_LENGTH){
-        toast('文本过长（'+formatCount(str.length)+'），请点击「下载」按钮保存');
-        return Promise.resolve(false);
-    }
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-        return navigator.clipboard.writeText(str).then(function(){
-            return true;
-        }).catch(function(){
-            return Promise.resolve(fbCopy(str));
-        });
-    }
-    return Promise.resolve(fbCopy(str));
+  if(!str)return Promise.resolve(false);
+  if(str.length>COPY_MAX_LENGTH){ toast('文本过长（'+formatCount(str.length)+'），请点击「下载」按钮保存'); return Promise.resolve(false); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(str).then(function(){ return true; }).catch(function(){ return Promise.resolve(fbCopy(str)); });
+  }
+  return Promise.resolve(fbCopy(str));
 }
 function readClipboard(){
-    if(navigator.clipboard&&navigator.clipboard.readText){
-        return navigator.clipboard.readText();
-    }
-    return Promise.reject(new Error('no-clipboard-api'));
+  if(navigator.clipboard&&navigator.clipboard.readText)return navigator.clipboard.readText();
+  return Promise.reject(new Error('no-clipboard-api'));
 }
 function fbCopy(str){
-    var ta=document.createElement('textarea');
-    ta.value=str;
-    ta.setAttribute('readonly','');
-    ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
-    document.body.appendChild(ta);
-    ta.focus(); ta.select();
-    var ok=false;
-    try{ ok=document.execCommand('copy'); }catch(e){ ok=false; }
-    document.body.removeChild(ta);
-    return ok;
+  var ta=document.createElement('textarea');
+  ta.value=str; ta.setAttribute('readonly','');
+  ta.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  var ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){ ok=false; }
+  document.body.removeChild(ta);
+  return ok;
 }
 function cleanText(str){
-    return Array.from(str).filter(function(ch){ return !ZW_ALL_SET.has(ch); }).join('');
+  return Array.from(str).filter(function(ch){
+    if(ZW_ALL_SET.has(ch))return false;
+    if(isHexChar(ch))return false;
+    if(isExtremeExclusiveChar(ch))return false;
+    return true;
+  }).join('');
 }
 function looksLikeText(s){
-    if(!s||!s.length)return false;
-    var printable=0;
-    for(var i=0;i<s.length;i++){
-        var c=s.charCodeAt(i);
-        if(c===9||c===10||c===13){ printable++; continue; }
-        if(c>=32&&c!==127)printable++;
-    }
-    return printable/s.length>0.8;
+  if(!s||!s.length)return false;
+  var printable=0;
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    if(c===9||c===10||c===13){ printable++; continue; }
+    if(c>=32&&c!==127)printable++;
+  }
+  return printable/s.length>0.8;
 }
 function tryDecodeUtf8(bytes){
-    try{ return new TextDecoder('utf-8', { fatal:true }).decode(bytes); }
-    catch(e){ return null; }
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
+  catch(e){ return null; }
 }
 function smoothScrollTo(el){
-    if(!el)return;
-    var rect=el.getBoundingClientRect();
-    var top=window.pageYOffset+rect.top-16;
-    try{ window.scrollTo({ top:top, behavior:'smooth' }); }
-    catch(e){ window.scrollTo(0, top); }
+  if(!el)return;
+  var rect=el.getBoundingClientRect();
+  var top=window.pageYOffset+rect.top-16;
+  try{ window.scrollTo({top:top,behavior:'smooth'}); }
+  catch(e){ window.scrollTo(0,top); }
 }
 function debounce(fn, wait){
-    var timer=null;
-    return function(){
-        var ctx=this, args=arguments;
-        clearTimeout(timer);
-        timer=setTimeout(function(){ fn.apply(ctx,args); }, wait);
-    };
+  var timer=null;
+  return function(){
+    var ctx=this,args=arguments;
+    clearTimeout(timer);
+    timer=setTimeout(function(){ fn.apply(ctx,args); }, wait);
+  };
 }
 function formatCount(n){
-    if(n<1000)return n+' 字';
-    if(n<10000)return (n/1000).toFixed(1)+' 千字';
-    return (n/10000).toFixed(1)+' 万字';
+  if(n<1000)return n+' 字';
+  if(n<10000)return (n/1000).toFixed(1)+' 千字';
+  return (n/10000).toFixed(1)+' 万字';
 }
 function formatBytes(n){
-    if(n<1024)return n+' B';
-    if(n<1024*1024)return (n/1024).toFixed(1)+' KB';
-    return (n/1024/1024).toFixed(2)+' MB';
+  if(n<1024)return n+' B';
+  if(n<1024*1024)return (n/1024).toFixed(1)+' KB';
+  return (n/1024/1024).toFixed(2)+' MB';
 }
 function decodeFileBytes(bytes){
-    if(!bytes||bytes.length===0)return '';
-    if(bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF){
-        try{ return new TextDecoder('utf-8').decode(bytes.slice(3)); }
-        catch(e){ return null; }
-    }
-    if(bytes.length>=2 && bytes[0]===0xFF && bytes[1]===0xFE){
-        try{ return new TextDecoder('utf-16le').decode(bytes.slice(2)); }
-        catch(e){ /* fall through */ }
-    }
-    if(bytes.length>=2 && bytes[0]===0xFE && bytes[1]===0xFF){
-        try{ return new TextDecoder('utf-16be').decode(bytes.slice(2)); }
-        catch(e){ /* fall through */ }
-    }
-    try{
-        return new TextDecoder('utf-8', { fatal:true }).decode(bytes);
-    }catch(e){
-        try{ return new TextDecoder('utf-8').decode(bytes); }
-        catch(e2){ return null; }
-    }
+  if(!bytes||bytes.length===0)return '';
+  if(bytes.length>=3 && bytes[0]===0xEF && bytes[1]===0xBB && bytes[2]===0xBF){
+    try{ return new TextDecoder('utf-8').decode(bytes.slice(3)); }catch(e){ return null; }
+  }
+  if(bytes.length>=2 && bytes[0]===0xFF && bytes[1]===0xFE){ try{ return new TextDecoder('utf-16le').decode(bytes.slice(2)); }catch(e){} }
+  if(bytes.length>=2 && bytes[0]===0xFE && bytes[1]===0xFF){ try{ return new TextDecoder('utf-16be').decode(bytes.slice(2)); }catch(e){} }
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(bytes); }
+  catch(e){ try{ return new TextDecoder('utf-8').decode(bytes); }catch(e2){ return null; } }
 }
 function buildDownloadFilename(visibleCount){
-    var d=new Date();
-    function pad(n){ return n<10?('0'+n):(''+n); }
-    var ts=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+
-           '_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
-    return '隐写文本_'+visibleCount+'字载体_'+ts+'.txt';
+  var d=new Date();
+  function pad(n){ return n<10?('0'+n):(''+n); }
+  var ts=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds());
+  return '隐写文本_'+visibleCount+'字载体_'+ts+'.txt';
 }
 
-/* ══════════ Toast ══════════ */
 var toastTimer=null;
 function toast(msg){
-    clearTimeout(toastTimer);
-    toastEl.textContent=msg;
-    toastEl.classList.add('visible');
-    toastTimer=setTimeout(function(){ toastEl.classList.remove('visible'); },1800);
+  clearTimeout(toastTimer);
+  toastEl.textContent=msg;
+  toastEl.classList.add('visible');
+  toastTimer=setTimeout(function(){ toastEl.classList.remove('visible'); },1800);
 }
-
-/* ══════════ 密码强度 ══════════ */
 function evaluatePassword(pw){
-    if(!pw)return {score:0, label:''};
-    var len=Array.from(pw).length;
-    var hasLower=/[a-z]/.test(pw);
-    var hasUpper=/[A-Z]/.test(pw);
-    var hasDigit=/[0-9]/.test(pw);
-    var hasSymbol=/[^A-Za-z0-9]/.test(pw);
-    var variety=(hasLower?1:0)+(hasUpper?1:0)+(hasDigit?1:0)+(hasSymbol?1:0);
-    var score=0;
-    if(len>=4)score=1;
-    if(len>=8&&variety>=2)score=2;
-    if(len>=10&&variety>=3)score=3;
-    if(len>=12&&variety>=4)score=4;
-    var labels=['','弱','一般','较好','强'];
-    return {score:score, label:labels[score]};
+  if(!pw)return {score:0,label:''};
+  var len=Array.from(pw).length;
+  var hasLower=/[a-z]/.test(pw),hasUpper=/[A-Z]/.test(pw);
+  var hasDigit=/[0-9]/.test(pw),hasSymbol=/[^A-Za-z0-9]/.test(pw);
+  var variety=(hasLower?1:0)+(hasUpper?1:0)+(hasDigit?1:0)+(hasSymbol?1:0);
+  var score=0;
+  if(len>=4)score=1;
+  if(len>=8&&variety>=2)score=2;
+  if(len>=10&&variety>=3)score=3;
+  if(len>=12&&variety>=4)score=4;
+  return {score:score,label:['','弱','一般','较好','强'][score]};
 }
-function updatePwStrength(pwEl, wrapEl, labelEl){
-    var res=evaluatePassword(pwEl.value);
-    if(!pwEl.value){
-        wrapEl.classList.remove('show');
-        labelEl.textContent='';
-        labelEl.className='pw-strength-label';
-        return;
-    }
-    wrapEl.classList.add('show');
-    var bars=wrapEl.querySelectorAll('.pw-bar');
-    var cls='';
-    if(res.score===1)cls='active-weak';
-    else if(res.score===2)cls='active-fair';
-    else if(res.score===3)cls='active-good';
-    else if(res.score>=4)cls='active-strong';
-    bars.forEach(function(b,i){
-        b.className='pw-bar';
-        if(i<res.score)b.classList.add(cls);
-    });
-    labelEl.textContent=res.label;
-    labelEl.className='pw-strength-label tone-'+(res.score===1?'weak':res.score===2?'fair':res.score===3?'good':'strong');
+function updatePwStrength(pwEl,wrapEl,labelEl){
+  var res=evaluatePassword(pwEl.value);
+  if(!pwEl.value){ wrapEl.classList.remove('show'); labelEl.textContent=''; labelEl.className='pw-label'; return; }
+  wrapEl.classList.add('show');
+  var bars=wrapEl.querySelectorAll('.pw-bar');
+  var cls='';
+  if(res.score===1)cls='weak';
+  else if(res.score===2)cls='fair';
+  else if(res.score===3)cls='good';
+  else if(res.score>=4)cls='strong';
+  bars.forEach(function(b,i){ b.className='pw-bar'; if(i<res.score)b.classList.add(cls); });
+  labelEl.textContent=res.label; labelEl.className='pw-label '+cls;
 }
 
-/* ══════════ 输入框状态 ══════════ */
 var autoGrowPending={};
 function autoGrow(t){
-    if(!t.offsetParent&&t.scrollHeight===0)return;
-    if(autoGrowPending[t.id])return;
-    autoGrowPending[t.id]=true;
-    requestAnimationFrame(function(){
-        autoGrowPending[t.id]=false;
-        t.style.height='auto';
-        t.style.height=Math.min(t.scrollHeight,320)+'px';
-    });
+  if(!t.offsetParent&&t.scrollHeight===0)return;
+  if(autoGrowPending[t.id])return;
+  autoGrowPending[t.id]=true;
+  requestAnimationFrame(function(){
+    autoGrowPending[t.id]=false;
+    t.style.height='auto';
+    t.style.height=Math.min(t.scrollHeight,320)+'px';
+  });
 }
-function countChars(str){
-    return Array.from(str).length;
+function countChars(str){ return Array.from(str).length; }
+
+function bitsPerChar(method){
+  if(method==='extreme')return 8;
+  if(method==='highdensity')return 4;
+  if(method==='base64')return 3;
+  return 1;
 }
+
+function computeCapacityPct(secretLen,carrierLen){
+  if(!secretLen||!carrierLen)return 0;
+  var algo=resolveAlgoForEncode();
+  var ratio=estimateCompressRatio(algo);
+  var bytesPerChar=(textEncodingPref==='gbk')?2:3;
+  var estBytes=secretLen*bytesPerChar*ratio;
+  var bpc=bitsPerChar(methodPref);
+  var estChars=Math.ceil(estBytes*8/bpc);
+  var cap=carrierLen*MAX_ZW_PER_CHAR;
+  return Math.min(100,Math.round(estChars/cap*100));
+}
+
 function updateFieldState(ta){
-    var countEl=$('count_'+ta.id);
-    if(!countEl)return;
-    var len=countChars(ta.value);
-    countEl.innerHTML='<span class="count-num">'+formatCount(len)+'</span>';
-    countEl.classList.remove('warn','danger');
+  var countEl=$('count_'+ta.id);
+  if(!countEl)return;
+  var len=countChars(ta.value);
+  var html='<span>'+formatCount(len)+'</span>';
+  countEl.classList.remove('warn','danger');
 
-    if(ta.id==='inSecret'){
-        var carrierLen=countChars(inCarrier.value);
-        var hint='';
-        if(carrierLen===0){
-            hint='<span class="capacity-hint">请先填写载体文本</span>';
-        }else{
-            var ratio=len/Math.max(carrierLen,1);
-            if(ratio>10){
-                hint='<span class="capacity-hint danger">载体太短，强烈建议增加</span>';
-            }else if(ratio>5){
-                hint='<span class="capacity-hint warn">载体偏短</span>';
-            }else{
-                hint='<span class="capacity-hint">载体足够</span>';
-            }
-        }
-        if(len>=100 && compressionDisplay){
-            hint+=' <span class="capacity-hint">'+compressionDisplay+' 动态压缩</span>';
-        }
-        countEl.innerHTML+=' '+hint;
-        if(len>ENCODE_CHAR_LIMIT*0.9)countEl.classList.add('danger');
-        else if(len>ENCODE_CHAR_LIMIT*0.7)countEl.classList.add('warn');
-    }
-
-    var clearBtn=document.querySelector('.btn-clear[data-clear="'+ta.id+'"]');
-    if(clearBtn)clearBtn.disabled=(ta.value.length===0);
-}
-[inCarrier,inSecret,inPaste,inDetect].forEach(function(t){
-    var handle=debounce(function(){
-        autoGrow(t);
-        updateFieldState(t);
-    }, INPUT_DEBOUNCE_MS);
-    t.addEventListener('input',handle);
-    updateFieldState(t);
-});
-
-/* ══════════ 清空 ══════════ */
-document.querySelectorAll('.btn-clear').forEach(function(btn){
-    btn.addEventListener('click',function(){
-        var id=btn.dataset.clear;
-        var ta=$(id);
-        if(!ta)return;
-        ta.value='';
-        autoGrow(ta);
-        updateFieldState(ta);
-        ta.focus();
-        if(id==='inCarrier'||id==='inSecret')collapse(resEncode);
-        else if(id==='inPaste')collapse(resDecode);
-        else if(id==='inDetect')collapse(resDetect);
-    });
-});
-
-/* ══════════ 密码显示/隐藏 ══════════ */
-document.querySelectorAll('.btn-toggle-pw').forEach(function(btn){
-    btn.addEventListener('click',function(){
-        var target=$(btn.dataset.target);
-        if(!target)return;
-        var reveal=(target.type==='password');
-        target.type=reveal?'text':'password';
-        btn.classList.toggle('revealed',reveal);
-    });
-});
-
-/* ══════════ 密码长度限制 ══════════ */
-[inPasswordHide,inPasswordExtract].forEach(function(inp){
-    inp.addEventListener('input',function(){
-        if(Array.from(inp.value).length>PASSWORD_MAX_LEN){
-            inp.value=Array.from(inp.value).slice(0,PASSWORD_MAX_LEN).join('');
-            toast('密码最长 '+PASSWORD_MAX_LEN+' 位');
-        }
-        if(inp===inPasswordHide){
-            updatePwStrength(inPasswordHide, pwStrengthHide, pwLabelHide);
-        }
-    });
-});
-
-/* ══════════ 粘贴 ══════════ */
-function showPasteHint(ta){
-    var field=ta.closest('.field');
-    if(!field)return;
-    var existing=field.querySelector('.paste-hint');
-    var hint;
-    if(existing){
-        hint=existing;
-        clearTimeout(hint._timer);
+  if(ta.id==='inSecret'){
+    var carrierLen=countChars(inCarrier.value);
+    if(carrierLen===0){
+      html+=' <span class="badge">请先填写载体文本</span>';
     }else{
-        hint=document.createElement('div');
-        hint.className='paste-hint';
-        hint.innerHTML=
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
-            '<span>浏览器未授权读取剪贴板，请<strong>点一下输入框 → 长按空白处</strong>，在弹出菜单中选「粘贴」</span>';
-        var footer=field.querySelector('.field-footer');
-        if(footer){
-            field.insertBefore(hint, footer);
-        }else{
-            field.appendChild(hint);
-        }
+      var pct=computeCapacityPct(len,carrierLen);
+      var clsName=pct>90?'danger':(pct>60?'warn':'ok');
+      var label=pct>90?'载体偏短':(pct>60?'接近上限':'容量充裕');
+      html+=' <span class="badge '+clsName+'">'+label+' '+pct+'%</span>';
     }
-    requestAnimationFrame(function(){ hint.classList.add('show'); });
-    hint._timer=setTimeout(function(){
-        hint.classList.remove('show');
-        setTimeout(function(){ if(hint.parentNode)hint.parentNode.removeChild(hint); }, 400);
-    }, 6000);
+    var algo=resolveAlgoForEncode();
+    if(len>=100 && algo)html+=' <span class="badge">'+(algo==='auto'?'自动压缩':algoDisplayName(algo)+' 压缩')+'</span>';
+    if(textEncodingPref==='gbk')html+=' <span class="badge">GBK</span>';
+    if(methodPref==='base64')html+=' <span class="badge blue">Base64·6bit</span>';
+    else if(methodPref==='highdensity')html+=' <span class="badge purple">4-bit</span>';
+    else if(methodPref==='extreme')html+=' <span class="badge gold">8-bit</span>';
+    if(len>ENCODE_CHAR_LIMIT*0.9)countEl.classList.add('danger');
+    else if(len>ENCODE_CHAR_LIMIT*0.7)countEl.classList.add('warn');
+  }
+  countEl.innerHTML=html;
+
+  var clearBtn=document.querySelector('.btn-clear[data-clear="'+ta.id+'"]');
+  if(clearBtn)clearBtn.disabled=(ta.value.length===0);
 }
-function bindPaste(btn, ta){
-    if(!btn||!ta)return;
-    btn.addEventListener('click',function(){
-        btn.disabled=true;
-        var promise;
-        if(navigator.clipboard&&navigator.clipboard.readText){
-            promise=navigator.clipboard.readText();
-        }else{
-            promise=Promise.reject(new Error('no-api'));
-        }
-        promise.then(function(text){
-            btn.disabled=false;
-            if(!text){ toast('剪贴板为空'); return; }
-            ta.value=text;
-            autoGrow(ta);
-            updateFieldState(ta);
-            ta.focus();
-            var field=ta.closest('.field');
-            var hint=field&&field.querySelector('.paste-hint');
-            if(hint){ hint.classList.remove('show'); }
-            toast('已粘贴 '+formatCount(countChars(text)));
-        }).catch(function(){
-            btn.disabled=false;
-            try{ ta.focus(); }catch(e){}
-            showPasteHint(ta);
-        });
+
+[inCarrier,inSecret,inPaste,inDetect].forEach(function(t){
+  var handle=debounce(function(){
+    autoGrow(t);
+    updateFieldState(t);
+    if(t===inCarrier)updateFieldState(inSecret);
+  }, INPUT_DEBOUNCE_MS);
+  t.addEventListener('input',handle);
+  updateFieldState(t);
+});
+
+function updateCompressHint(){
+  if(!compressHint)return;
+  var infoSvg='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  compressHint.hidden=false;
+  compressHint.className='hint';
+
+  var extraNotes=[];
+  if(textEncodingPref==='gbk'){
+    if(externalIconv)extraNotes.push('已加载外部 <strong>GBK 编码库</strong>');
+    else if(externalIconvLoading)extraNotes.push('正在加载外部 <strong>GBK 编码库</strong>…');
+    else extraNotes.push('GBK 首次使用时会自动加载外部库（约 100KB）');
+  }
+  if(methodPref==='base64')extraNotes.push('使用 <strong>Base64 方法（6 bit/字符对）</strong>');
+  else if(methodPref==='highdensity')extraNotes.push('使用<strong>高压缩比方法（4 bit/字符）</strong>');
+  else if(methodPref==='extreme')extraNotes.push('使用<strong>极高压缩比方法（8 bit/字符）</strong>');
+
+  var forceNote=forceCompress?'（已开启「即使变大也压缩」）':'';
+  var compNote='';
+  if(compressPref==='none'){
+    extraNotes.push('<strong style="color:var(--fg-secondary)">不压缩：直接嵌入原始字节</strong>');
+    compNote='压缩已关闭';
+  }else if(compressPref==='deflate-raw'){
+    compNote='将使用原生 <strong>deflate-raw</strong> 压缩（无 zlib 头无校验和，小文本更省）'+forceNote;
+    if(!nativeSupport.deflateRaw)extraNotes.push('<strong style="color:var(--red)">当前浏览器不支持 deflate-raw</strong>');
+  }else if(compressPref==='brotli'){
+    if(externalBrotli)compNote='已加载外部 <strong>Brotli 库</strong>'+forceNote;
+    else if(externalBrotliLoading)compNote='正在加载外部 <strong>Brotli 库</strong>…';
+    else compNote='首次压缩时将自动加载外部 Brotli 库（约 400KB）'+forceNote;
+  }else if(compressPref==='zstd'){
+    if(nativeSupport.zstd)compNote='将使用原生 <strong>ZSTD</strong> 压缩'+forceNote;
+    else if(externalZstd)compNote='已加载外部 <strong>ZSTD 库</strong>'+forceNote;
+    else if(externalZstdLoading)compNote='正在加载外部 <strong>ZSTD 库</strong>…';
+    else compNote='原生不支持 ZSTD，首次压缩时将自动加载外部库（约 500KB）'+forceNote;
+  }else if(compressPref==='gzip'){
+    if(nativeSupport.gzip)compNote='将使用原生 <strong>gzip</strong> 压缩'+forceNote;
+    else compNote='当前浏览器不支持 gzip，将不压缩直接嵌入';
+  }else{
+    var autoLocal=[];
+    if(nativeSupport.deflateRaw)autoLocal.push('deflate-raw');
+    if(nativeSupport.gzip)autoLocal.push('gzip');
+    if(nativeSupport.zstd)autoLocal.push('ZSTD');
+    var libNote=(externalBrotli||externalZstd)?'外部库已就绪':'载荷 ≥'+AUTO_EXTERNAL_MIN_BYTES+' B 时加跑外部库';
+    compNote='自动模式：实测竞选最小输出 · 本地 <strong>'+(autoLocal.length?autoLocal.join(' / '):'无')+'</strong> 零成本必跑 · '+libNote+forceNote;
+  }
+
+  var allNotes=[compNote].concat(extraNotes);
+  compressHint.innerHTML=infoSvg+'<span>'+allNotes.join(' · ')+'。</span>';
+  if(compressPref==='auto' && textEncodingPref==='utf8' && methodPref==='standard'){
+    compressHint.classList.add('ok');
+  }
+}
+updateCompressHint();
+
+document.querySelectorAll('.btn-clear').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var id=btn.dataset.clear;
+    var ta=$(id);
+    if(!ta)return;
+    ta.value='';
+    autoGrow(ta); updateFieldState(ta); ta.focus();
+    if(id==='inCarrier')updateFieldState(inSecret);
+    if(id==='inCarrier'||id==='inSecret')closeResult(resEncode);
+    else if(id==='inPaste')closeResult(resDecode);
+    else if(id==='inDetect')closeResult(resDetect);
+  });
+});
+document.querySelectorAll('.btn-eye').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var target=$(btn.dataset.target);
+    if(!target)return;
+    var reveal=(target.type==='password');
+    target.type=reveal?'text':'password';
+    btn.classList.toggle('revealed',reveal);
+  });
+});
+[inPasswordHide,inPasswordExtract].forEach(function(inp){
+  inp.addEventListener('input',function(){
+    if(Array.from(inp.value).length>PASSWORD_MAX_LEN){
+      inp.value=Array.from(inp.value).slice(0,PASSWORD_MAX_LEN).join('');
+      toast('密码最长 '+PASSWORD_MAX_LEN+' 位');
+    }
+    if(inp===inPasswordHide)updatePwStrength(inPasswordHide,pwStrengthHide,pwLabelHide);
+  });
+});
+function showPasteHint(ta){
+  var field=ta.closest('.field');
+  if(!field)return;
+  var existing=field.querySelector('.paste-hint');
+  var hint;
+  if(existing){ hint=existing; clearTimeout(hint._timer); }
+  else{
+    hint=document.createElement('div');
+    hint.className='paste-hint';
+    hint.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'+
+      '<span>浏览器未授权读取剪贴板，请<strong>点一下输入框 → 长按空白处</strong>，在弹出菜单中选「粘贴」</span>';
+    var footer=field.querySelector('.field-footer');
+    if(footer)field.insertBefore(hint,footer); else field.appendChild(hint);
+  }
+  requestAnimationFrame(function(){ hint.classList.add('show'); });
+  hint._timer=setTimeout(function(){
+    hint.classList.remove('show');
+    setTimeout(function(){ if(hint.parentNode)hint.parentNode.removeChild(hint); },400);
+  },6000);
+}
+function bindPaste(btn,ta){
+  if(!btn||!ta)return;
+  btn.addEventListener('click',function(){
+    btn.disabled=true;
+    var promise;
+    if(navigator.clipboard&&navigator.clipboard.readText)promise=navigator.clipboard.readText();
+    else promise=Promise.reject(new Error('no-api'));
+    promise.then(function(text){
+      btn.disabled=false;
+      if(!text){ toast('剪贴板为空'); return; }
+      ta.value=text; autoGrow(ta); updateFieldState(ta); ta.focus();
+      if(ta===inCarrier)updateFieldState(inSecret);
+      var field=ta.closest('.field');
+      var hint=field&&field.querySelector('.paste-hint');
+      if(hint)hint.classList.remove('show');
+      toast('已粘贴 '+formatCount(countChars(text)));
+    }).catch(function(){
+      btn.disabled=false; try{ ta.focus(); }catch(e){}
+      showPasteHint(ta);
     });
+  });
 }
-bindPaste($('btnPasteCarrier'), inCarrier);
-bindPaste($('btnPasteSecret'), inSecret);
-bindPaste($('btnPaste'), inPaste);
-bindPaste($('btnPasteDetect'), inDetect);
+bindPaste($('btnPasteCarrier'),inCarrier);
+bindPaste($('btnPasteSecret'),inSecret);
+bindPaste($('btnPaste'),inPaste);
+bindPaste($('btnPasteDetect'),inDetect);
 
-/* ══════════ 文件导入 ══════════ */
-btnImport.addEventListener('click',function(){
-    fileInput.value='';
-    fileInput.click();
-});
+btnImport.addEventListener('click',function(){ fileInput.value=''; fileInput.click(); });
 fileInput.addEventListener('change',function(){
-    var file=fileInput.files&&fileInput.files[0];
-    if(!file)return;
-    if(file.size>MAX_FILE_SIZE){
-        toast('文件过大（上限 10 MB），当前 '+formatBytes(file.size));
-        return;
-    }
-    if(file.size===0){
-        toast('文件为空');
-        return;
-    }
-    fileProgress.classList.add('show');
-    fileProgressText.textContent='读取文件中…（'+ formatBytes(file.size) +'）';
-
-    var reader=new FileReader();
-    reader.onload=function(e){
-        fileProgress.classList.remove('show');
-        var bytes=new Uint8Array(e.target.result);
-        var text=decodeFileBytes(bytes);
-        if(text===null){
-            toast('无法识别文件编码，请另存为 UTF-8 后重试');
-            return;
-        }
-        inPaste.value=text;
-        autoGrow(inPaste);
-        updateFieldState(inPaste);
-        var field=inPaste.closest('.field');
-        var hint=field&&field.querySelector('.paste-hint');
-        if(hint){ hint.classList.remove('show'); }
-        toast('已导入 '+file.name+' · '+formatCount(countChars(text)));
-    };
-    reader.onerror=function(){
-        fileProgress.classList.remove('show');
-        toast('文件读取失败');
-    };
-    reader.onprogress=function(ev){
-        if(ev.lengthComputable){
-            var pct=Math.round(ev.loaded/ev.total*100);
-            fileProgressText.textContent='读取文件中… '+pct+'%';
-        }
-    };
-    reader.readAsArrayBuffer(file);
+  var file=fileInput.files&&fileInput.files[0];
+  if(!file)return;
+  if(file.size>MAX_FILE_SIZE){ toast('文件过大（上限 10 MB），当前 '+formatBytes(file.size)); return; }
+  if(file.size===0){ toast('文件为空'); return; }
+  fileProgress.classList.add('show');
+  fileProgressText.textContent='读取文件中…（'+formatBytes(file.size)+'）';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    fileProgress.classList.remove('show');
+    var bytes=new Uint8Array(e.target.result);
+    var text=decodeFileBytes(bytes);
+    if(text===null){ toast('无法识别文件编码，请另存为 UTF-8 后重试'); return; }
+    inPaste.value=text; autoGrow(inPaste); updateFieldState(inPaste);
+    var field=inPaste.closest('.field');
+    var hint=field&&field.querySelector('.paste-hint');
+    if(hint)hint.classList.remove('show');
+    toast('已导入 '+file.name+' · '+formatCount(countChars(text)));
+  };
+  reader.onerror=function(){ fileProgress.classList.remove('show'); toast('文件读取失败'); };
+  reader.onprogress=function(ev){
+    if(ev.lengthComputable){ fileProgressText.textContent='读取文件中… '+Math.round(ev.loaded/ev.total*100)+'%'; }
+  };
+  reader.readAsArrayBuffer(file);
 });
 
-/* ══════════ 结果区 ══════════ */
-function expand(el){
-    el.classList.add('show');
-    el.style.maxHeight=el.scrollHeight+'px';
-    var body=el.querySelector('.result-body');
-    if(body)body.scrollTop=0;
-}
-function collapse(el){
-    el.style.maxHeight=el.scrollHeight+'px';
-    void el.offsetHeight;
-    el.classList.remove('show');
-    el.style.maxHeight='0px';
-}
-function expandAndScroll(el){
-    expand(el);
-    setTimeout(function(){ smoothScrollTo(el); }, 120);
-}
-function growPanelTextareas(panel){
-    panel.querySelectorAll('textarea').forEach(function(t){ autoGrow(t); });
-}
+function openResult(el){ el.classList.add('open'); }
+function closeResult(el){ el.classList.remove('open'); }
+function expandAndScroll(el){ openResult(el); setTimeout(function(){ smoothScrollTo(el); },120); }
+function growPanelTextareas(panel){ panel.querySelectorAll('textarea').forEach(function(t){ autoGrow(t); }); }
 growPanelTextareas($('pHide'));
 
-/* ══════════ 分段控件 ══════════ */
-segBtns.forEach(function(btn){
-    btn.addEventListener('click',function(){
-        var name=btn.dataset.tab;
-        segBtns.forEach(function(b){
-            b.classList.toggle('active',b===btn);
-            b.setAttribute('aria-selected',b===btn?'true':'false');
-        });
-        panels.forEach(function(p){ p.classList.remove('active'); });
-        var panel=document.getElementById(TAB_PANEL[name]);
-        panel.classList.add('active');
-        segSlider.style.transform='translateX('+(TAB_IDX[name]*100)+'%)';
-        collapse(resEncode); collapse(resDecode); collapse(resDetect);
-        closeSheet();
-        requestAnimationFrame(function(){ growPanelTextareas(panel); });
+tabBtns.forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var name=btn.dataset.tab;
+    tabBtns.forEach(function(b){
+      b.classList.toggle('active',b===btn);
+      b.setAttribute('aria-selected',b===btn?'true':'false');
     });
+    panels.forEach(function(p){ p.classList.remove('active'); });
+    var panel=document.getElementById(TAB_PANEL[name]);
+    panel.classList.add('active');
+    tabGlider.style.transform='translateX('+(TAB_IDX[name]*100)+'%)';
+    closeResult(resEncode); closeResult(resDecode); closeResult(resDetect);
+    closeSheet();
+    requestAnimationFrame(function(){ growPanelTextareas(panel); });
+  });
 });
 
-/* ══════════ 底部动作表 ══════════ */
 var sheetCB=null, sheetPickTimer=null;
 function openSheet(title,options,selected,onSelect){
-    clearTimeout(sheetPickTimer);
-    sheetTitle.textContent=title;
-    var html='';
-    options.forEach(function(opt,i){
-        var sel=i===selected;
-        html+='<button class="sheet-opt'+(sel?' selected':'')+'" type="button" data-idx="'+i+'" '+
-            'role="option" aria-selected="'+sel+'">'+
-            '<span class="opt-main">'+
-                '<span class="opt-name">'+escapeHtml(opt.name)+'</span>'+
-                '<span class="opt-desc">'+escapeHtml(opt.desc)+'</span>'+
-                (opt.note?'<span class="opt-note">'+escapeHtml(opt.note)+'</span>':'')+
-            '</span>'+
-            '<svg class="opt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
-            'stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>'+
-        '</button>';
-    });
-    sheetBody.innerHTML=html;
-    sheetBody.scrollTop=0;
-    sheetCB=onSelect;
-    sheetOverlay.classList.add('open');
-    sheetOverlay.setAttribute('aria-hidden','false');
-    sheet.classList.add('open');
-    sheet.setAttribute('aria-hidden','false');
-    document.body.style.overflow='hidden';
+  clearTimeout(sheetPickTimer);
+  sheetTitle.textContent=title;
+  var html='';
+  options.forEach(function(opt,i){
+    var sel=i===selected;
+    html+='<button class="sheet-opt'+(sel?' selected':'')+'" type="button" data-idx="'+i+'" role="option" aria-selected="'+sel+'">'+
+      '<span class="opt-main">'+
+        '<span class="opt-name">'+escapeHtml(opt.name)+'</span>'+
+        '<span class="opt-desc">'+escapeHtml(opt.desc)+'</span>'+
+        (opt.note?'<span class="opt-note">'+escapeHtml(opt.note)+'</span>':'')+
+      '</span>'+
+      '<svg class="opt-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>'+
+    '</button>';
+  });
+  sheetBody.innerHTML=html;
+  sheetBody.scrollTop=0;
+  sheetCB=onSelect;
+  sheetOverlay.classList.add('open'); sheetOverlay.setAttribute('aria-hidden','false');
+  sheet.classList.add('open'); sheet.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
 }
 function closeSheet(){
-    clearTimeout(sheetPickTimer);
-    sheetOverlay.classList.remove('open');
-    sheetOverlay.setAttribute('aria-hidden','true');
-    sheet.classList.remove('open');
-    sheet.setAttribute('aria-hidden','true');
-    document.body.style.overflow='';
-    sheetCB=null;
+  clearTimeout(sheetPickTimer);
+  sheetOverlay.classList.remove('open'); sheetOverlay.setAttribute('aria-hidden','true');
+  sheet.classList.remove('open'); sheet.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+  sheetCB=null;
 }
 sheetBody.addEventListener('click',function(e){
-    var opt=e.target.closest('.sheet-opt');
-    if(!opt)return;
-    if(opt.classList.contains('selected')){closeSheet();return;}
-    var idx=parseInt(opt.dataset.idx,10);
-    sheetBody.querySelectorAll('.sheet-opt').forEach(function(el){
-        el.classList.toggle('selected',el===opt);
-        el.setAttribute('aria-selected',el===opt?'true':'false');
-    });
-    var cb=sheetCB;
-    clearTimeout(sheetPickTimer);
-    sheetPickTimer=setTimeout(function(){
-        closeSheet();
-        if(cb)cb(idx);
-    },170);
+  var opt=e.target.closest('.sheet-opt');
+  if(!opt)return;
+  if(opt.classList.contains('selected')){ closeSheet(); return; }
+  var idx=parseInt(opt.dataset.idx,10);
+  sheetBody.querySelectorAll('.sheet-opt').forEach(function(el){
+    el.classList.toggle('selected',el===opt);
+    el.setAttribute('aria-selected',el===opt?'true':'false');
+  });
+  var cb=sheetCB;
+  clearTimeout(sheetPickTimer);
+  sheetPickTimer=setTimeout(function(){ closeSheet(); if(cb)cb(idx); },170);
 });
 sheetCancel.addEventListener('click',closeSheet);
 sheetOverlay.addEventListener('click',closeSheet);
-document.addEventListener('keydown',function(e){
-    if(e.key==='Escape')closeSheet();
+document.addEventListener('keydown',function(e){ if(e.key==='Escape')closeSheet(); });
+
+$('rowMethod').addEventListener('click',function(){
+  var idx=0;
+  for(var i=0;i<METHOD_OPTIONS.length;i++)if(METHOD_OPTIONS[i].id===methodPref){ idx=i; break; }
+  openSheet('隐藏方法',METHOD_OPTIONS,idx,function(i){
+    methodPref=METHOD_OPTIONS[i].id;
+    $('valMethod').textContent=METHOD_OPTIONS[i].name;
+    closeResult(resEncode);
+    updateCompressHint();
+    updateFieldState(inSecret);
+    var schemeRow=$('rowSchemeHide');
+    if(methodPref==='standard')schemeRow.classList.remove('disabled');
+    else schemeRow.classList.add('disabled');
+  });
+});
+
+$('rowTextEncoding').addEventListener('click',function(){
+  var idx=0;
+  for(var i=0;i<TEXT_ENCODING_OPTIONS.length;i++)if(TEXT_ENCODING_OPTIONS[i].id===textEncodingPref){ idx=i; break; }
+  openSheet('文本编码',TEXT_ENCODING_OPTIONS,idx,function(i){
+    textEncodingPref=TEXT_ENCODING_OPTIONS[i].id;
+    $('valTextEncoding').textContent=TEXT_ENCODING_OPTIONS[i].name;
+    closeResult(resEncode);
+    updateCompressHint();
+    updateFieldState(inSecret);
+    if(textEncodingPref==='gbk' && !externalIconv){
+      loadExternalIconv().then(function(){ updateCompressHint(); toast('外部 GBK 编码库已加载'); })
+        .catch(function(){ updateCompressHint(); toast('GBK 库加载失败，请检查网络'); });
+    }
+  });
 });
 
 $('rowSchemeHide').addEventListener('click',function(){
-    openSheet('编码方案',SCHEMES,hideSchemeIdx,function(i){
-        hideSchemeIdx=i;
-        $('valSchemeHide').textContent=SCHEMES[i].name;
-        collapse(resEncode);
-    });
-});
-$('rowSchemeExtract').addEventListener('click',function(){
-    openSheet('提取方案',EXTRACT_OPTIONS,extractSchemeIdx,function(i){
-        extractSchemeIdx=i;
-        $('valSchemeExtract').textContent=EXTRACT_OPTIONS[i].name;
-        collapse(resDecode);
-    });
+  if(methodPref!=='standard')return;
+  openSheet('编码方案',SCHEMES,hideSchemeIdx,function(i){
+    hideSchemeIdx=i;
+    $('valSchemeHide').textContent=SCHEMES[i].name;
+    closeResult(resEncode);
+  });
 });
 
-/* ══════════ 零宽字符编解码 ══════════ */
-function bytesToZeroWidth(bytes,zero,one){
-    var parts=new Array(bytes.length*8);
-    var p=0;
-    for(var i=0;i<bytes.length;i++){
-        var bin=bytes[i].toString(2);
-        while(bin.length<8)bin='0'+bin;
-        for(var j=0;j<8;j++){
-            parts[p++]=(bin.charCodeAt(j)===48)?zero:one;
-        }
+$('rowSchemeExtract').addEventListener('click',function(){
+  openSheet('提取方案',EXTRACT_OPTIONS,extractSchemeIdx,function(i){
+    extractSchemeIdx=i;
+    $('valSchemeExtract').textContent=EXTRACT_OPTIONS[i].name;
+    closeResult(resDecode);
+  });
+});
+
+$('rowCompress').addEventListener('click',function(){
+  var idx=0;
+  for(var i=0;i<COMPRESS_OPTIONS.length;i++)if(COMPRESS_OPTIONS[i].id===compressPref){ idx=i; break; }
+  openSheet('压缩算法',COMPRESS_OPTIONS,idx,function(i){
+    compressPref=COMPRESS_OPTIONS[i].id;
+    $('valCompress').textContent=COMPRESS_OPTIONS[i].name;
+    closeResult(resEncode);
+    updateCompressHint();
+    updateFieldState(inSecret);
+    if(compressPref==='brotli' && !externalBrotli){
+      loadExternalBrotli().then(function(){ updateCompressHint(); toast('外部 Brotli 库已加载'); })
+        .catch(function(){ updateCompressHint(); toast('外部 Brotli 库加载失败'); });
     }
-    return parts.join('');
+    if(compressPref==='zstd' && !nativeSupport.zstd && !externalZstd){
+      loadExternalZstd().then(function(){ updateCompressHint(); toast('外部 ZSTD 库已加载'); })
+        .catch(function(){ updateCompressHint(); toast('外部 ZSTD 库加载失败'); });
+    }
+    if(compressPref==='deflate-raw' && !nativeSupport.deflateRaw){
+      toast('当前浏览器不支持 deflate-raw');
+    }
+  });
+});
+
+$('rowForceCompress').addEventListener('click',function(){
+  forceCompress=!forceCompress;
+  $('switchForce').classList.toggle('on',forceCompress);
+  $('rowForceCompress').setAttribute('aria-pressed',forceCompress?'true':'false');
+  closeResult(resEncode);
+  updateCompressHint();
+  updateFieldState(inSecret);
+});
+
+/* ══════════ 编码：4 种方法 ══════════ */
+function bytesToZeroWidth(bytes,zero,one){
+  var parts=new Array(bytes.length*8), p=0;
+  for(var i=0;i<bytes.length;i++){
+    var bin=bytes[i].toString(2);
+    while(bin.length<8)bin='0'+bin;
+    for(var j=0;j<8;j++)parts[p++]=(bin.charCodeAt(j)===48)?zero:one;
+  }
+  return parts.join('');
 }
 function zeroWidthToBytes(zw,zero,one){
-    var len=zw.length;
-    var bits=new Array(len);
-    var count=0;
-    for(var i=0;i<len;i++){
-        var c=zw.charAt(i);
-        if(c===zero)bits[count++]='0';
-        else if(c===one)bits[count++]='1';
-    }
-    if(count===0||count%8!==0)return null;
-    var bytes=new Uint8Array(count/8);
-    for(var k=0;k<bytes.length;k++){
-        var base=k*8;
-        var b=0;
-        for(var m=0;m<8;m++){
-            b=(b<<1)|(bits[base+m]==='1'?1:0);
-        }
-        bytes[k]=b;
-    }
-    return bytes;
-}
-function extractZw(text,scheme){
-    var zw='', cps=Array.from(text);
-    for(var i=0;i<cps.length;i++){
-        if(cps[i]===scheme.zero||cps[i]===scheme.one)zw+=cps[i];
-    }
-    return zw;
+  var len=zw.length, bits=new Array(len), count=0;
+  for(var i=0;i<len;i++){
+    var c=zw.charAt(i);
+    if(c===zero)bits[count++]='0';
+    else if(c===one)bits[count++]='1';
+  }
+  if(count===0||count%8!==0)return null;
+  var bytes=new Uint8Array(count/8);
+  for(var k=0;k<bytes.length;k++){
+    var base=k*8, b=0;
+    for(var m=0;m<8;m++)b=(b<<1)|(bits[base+m]==='1'?1:0);
+    bytes[k]=b;
+  }
+  return bytes;
 }
 
+function bytesToBase64Chars(bytes){
+  var bits=[];
+  for(var i=0;i<bytes.length;i++)for(var j=7;j>=0;j--)bits.push((bytes[i]>>j)&1);
+  var paddingBits=(6-(bits.length%6))%6;
+  for(var p=0;p<paddingBits;p++)bits.push(0);
+  var groups=[paddingBits];
+  for(var k=0;k<bits.length;k+=6){
+    var v=0;
+    for(var m=0;m<6;m++)v=(v<<1)|bits[k+m];
+    groups.push(v);
+  }
+  var out=new Array(groups.length*2);
+  for(var g=0;g<groups.length;g++){
+    out[g*2]=BASE64_LOW[groups[g]&7];
+    out[g*2+1]=BASE64_HIGH[(groups[g]>>3)&7];
+  }
+  return out.join('');
+}
+function base64CharsToBytes(text){
+  var cps=Array.from(text);
+  var pairs=[], i=0;
+  while(i<cps.length){
+    var ch=cps[i];
+    if(isBase64LowChar(ch)){
+      var j=i+1;
+      while(j<cps.length && !isBase64HighChar(cps[j]) && !isBase64LowChar(cps[j]))j++;
+      if(j<cps.length && isBase64HighChar(cps[j])){
+        pairs.push((BASE64_HIGH_MAP[cps[j]]<<3)|BASE64_LOW_MAP[ch]);
+        i=j+1;
+      }else{ i++; }
+    }else{ i++; }
+  }
+  if(pairs.length < 2)return null;
+  var paddingBits=pairs[0];
+  if(paddingBits > 5)return null;
+  var bits=[];
+  for(var v=1;v<pairs.length;v++)for(var b=5;b>=0;b--)bits.push((pairs[v]>>b)&1);
+  if(paddingBits>0 && bits.length>=paddingBits){
+    bits=bits.slice(0,bits.length-paddingBits);
+  }
+  var outLen=Math.floor(bits.length/8);
+  if(outLen===0)return null;
+  var out=new Uint8Array(outLen);
+  for(var k=0;k<outLen;k++){
+    var byte=0;
+    for(var m=0;m<8;m++)byte=(byte<<1)|bits[k*8+m];
+    out[k]=byte;
+  }
+  return out;
+}
+
+function bytesToHighDensity(bytes){
+  var parts=new Array(bytes.length*2), p=0;
+  for(var i=0;i<bytes.length;i++){
+    var b=bytes[i];
+    parts[p++]=HEX_CHARS[(b>>4)&0x0F];
+    parts[p++]=HEX_CHARS[b&0x0F];
+  }
+  return parts.join('');
+}
+function highDensityToBytes(text){
+  var nibbles=[], cps=Array.from(text);
+  for(var i=0;i<cps.length;i++){
+    var n=HEX_CHAR_MAP[cps[i]];
+    if(n!==undefined)nibbles.push(n);
+  }
+  if(nibbles.length===0||nibbles.length%2!==0)return null;
+  var bytes=new Uint8Array(nibbles.length/2);
+  for(var k=0;k<bytes.length;k++)bytes[k]=(nibbles[k*2]<<4)|nibbles[k*2+1];
+  return bytes;
+}
+
+function bytesToExtreme(bytes){
+  var parts=new Array(bytes.length);
+  for(var i=0;i<bytes.length;i++)parts[i]=DENSE256[bytes[i]];
+  return parts.join('');
+}
+function extremeToBytes(text){
+  var bytes=[], cps=Array.from(text);
+  for(var i=0;i<cps.length;i++){
+    var b=DENSE256_MAP[cps[i]];
+    if(b!==undefined)bytes.push(b);
+  }
+  if(bytes.length===0)return null;
+  return new Uint8Array(bytes);
+}
+
+function bytesToHiddenChars(bytes, method, scheme){
+  if(method==='extreme')return bytesToExtreme(bytes);
+  if(method==='highdensity')return bytesToHighDensity(bytes);
+  if(method==='base64')return bytesToBase64Chars(bytes);
+  return bytesToZeroWidth(bytes, scheme.zero, scheme.one);
+}
+function hiddenCharsToBytes(text, method, scheme){
+  if(method==='extreme')return extremeToBytes(text);
+  if(method==='highdensity')return highDensityToBytes(text);
+  if(method==='base64')return base64CharsToBytes(text);
+  var zw='', cps=Array.from(text);
+  for(var i=0;i<cps.length;i++)if(cps[i]===scheme.zero||cps[i]===scheme.one)zw+=cps[i];
+  if(!zw||zw.length%8!==0)return null;
+  return zeroWidthToBytes(zw, scheme.zero, scheme.one);
+}
+
+/* ══════════ meta 编解码 ══════════
+   bit 7:   deflate-raw 标志
+   bit 6-5: 方法 (0=standard, 1=base64, 2=highdensity, 3=extreme)
+   bit 4-3: 压缩 (00=none, 01=gzip, 10=brotli, 11=zstd)
+   bit 2:   编码 (UTF-8/GBK)
+   bit 1:   加密
+   bit 0:   保留
+*/
+var METHOD_MAP={ standard:0, base64:1, highdensity:2, extreme:3 };
+var METHOD_REV=['standard','base64','highdensity','extreme'];
+var COMP_MAP={ none:0, gzip:1, brotli:2, zstd:3 };
+var COMP_REV=['none','gzip','brotli','zstd'];
+
+function buildMeta(method, compression, gbk, encrypted){
+  var m=0;
+  m|=(METHOD_MAP[method]||0)<<5;
+  if(compression==='deflate-raw')m|=0x80;
+  else m|=(COMP_MAP[compression]||0)<<3;
+  if(gbk)m|=0x04;
+  if(encrypted)m|=0x02;
+  return m;
+}
+function parseMeta(meta){
+  var isDeflateRaw=!!(meta&0x80);
+  var comp=isDeflateRaw?'deflate-raw':COMP_REV[(meta>>3)&3];
+  return {
+    /* ★ 关键修复：右移 5 后只保留 bit 1-0（原 bit 6-5），因为 bit 7 已被占用做 deflate-raw 标志 */
+    method:METHOD_REV[(meta>>5)&3],
+    compression:comp,
+    gbk:!!(meta&0x04),
+    encrypted:!!(meta&0x02)
+  };
+}
+
+/* ══════════ 编码流程 ══════════ */
 var lastEncStats={ visibleCount:0 };
 
-/* ══════════ 编码 ══════════ */
-btnEncode.addEventListener('click',function(){
-    if(btnEncode.classList.contains('loading'))return;
-    var carrier=inCarrier.value, secret=inSecret.value;
-    var password=inPasswordHide.value;
-    if(!carrier.trim()){ toast('请输入载体文本'); return; }
-    if(!secret.trim()){ toast('请输入隐藏内容'); return; }
-
-    var secretLen=countChars(secret);
-    if(secretLen>ENCODE_CHAR_LIMIT){
-        toast('隐藏内容过长（上限 '+formatCount(ENCODE_CHAR_LIMIT)+'）');
-        return;
+/* ══════════ 自动档：实测竞选 ══════════
+   本地算法（deflate-raw / gzip / 原生 zstd）零下载成本，全部无条件参选；
+   Brotli / ZSTD 外部库在「载荷 ≥ AUTO_EXTERNAL_MIN_BYTES」或「开启强制压缩」
+   或「本会话已加载过」时参选，避免为几十字节的收益先下载约 900KB wasm。
+   所有候选并行压缩，输出最小者胜出；无一小于原图（且未开强制）则不压缩。 */
+function doCompressAuto(bytes, force){
+  var algos=[];
+  if(nativeSupport.deflateRaw)algos.push('deflate-raw');
+  if(nativeSupport.gzip)algos.push('gzip');
+  if(nativeSupport.zstd)algos.push('zstd');
+  if(force || bytes.length>=AUTO_EXTERNAL_MIN_BYTES){
+    if(externalBrotli)algos.push('brotli');
+    if(externalZstd && !nativeSupport.zstd)algos.push('zstd');
+  }
+  if(algos.length===0){
+    return Promise.resolve({ bytes:bytes, compressed:false, compressFailed:true });
+  }
+  var tasks=algos.map(function(a){
+    return doCompress(bytes,a).then(function(out){
+      return { algo:a, bytes:out };
+    }).catch(function(err){
+      console.warn('[自动压缩] '+a+' 失败，退出竞选：', err);
+      return null;
+    });
+  });
+  return Promise.all(tasks).then(function(results){
+    var best=null;
+    results.forEach(function(r){
+      if(r && (!best || r.bytes.length<best.bytes.length))best=r;
+    });
+    if(!best)return { bytes:bytes, compressed:false, compressFailed:true };
+    if(best.bytes.length<bytes.length || force){
+      return { bytes:best.bytes, compressed:true, usedAlgo:best.algo, larger:best.bytes.length>=bytes.length };
     }
-    if(password&&!cryptoAvailable){ toast('当前环境不支持加密'); return; }
+    return { bytes:bytes, compressed:false, noGain:true, noGainAlgo:'auto' };
+  });
+}
 
-    var scheme=SCHEMES[hideSchemeIdx];
-    var cleaned=cleanText(carrier);
-    var carrierLen=countChars(cleaned);
-    if(carrierLen===0){ toast('载体文本为空'); return; }
+function encodePayload(secretText, opts){
+  var bytesPromise;
+  if(opts.useGBK)bytesPromise=gbkEncode(secretText);
+  else bytesPromise=Promise.resolve(new TextEncoder().encode(secretText));
 
-    var rawBytes=new TextEncoder().encode(secret);
-    var algo=pickCompressionAlgo();
-    var willAttemptCompress=(rawBytes.length>=COMPRESS_TRY_MIN_BYTES && !!algo);
+  return bytesPromise.then(function(bytes){
+    var originalSize=bytes.length;
+    var usedAlgo=null;
 
-    var estRatio = (algo==='brotli') ? 0.45 : 0.60;
-    var estBytes=willAttemptCompress
-        ? Math.floor(rawBytes.length*estRatio)+(password?45:0)
-        : rawBytes.length+(password?45:0);
-    var estZwChars=estBytes*8;
-    var perChar=estZwChars/carrierLen;
-
-    if(perChar>MAX_ZW_PER_CHAR){
-        var recommend=Math.ceil(estZwChars/MAX_ZW_PER_CHAR);
-        var confirmMsg='载体太短！\n\n'+
-            '隐藏内容约需 '+formatCount(estZwChars)+' 个零宽字符，\n'+
-            '当前载体 '+carrierLen+' 字，每个字要挂约 '+Math.round(perChar)+' 个零宽字符。\n\n'+
-            '生成的文本会超过大多数平台的消息限制（微信/短信/Twitter 都发不出去）。\n\n'+
-            '建议载体至少 '+recommend+' 字。\n\n'+
-            '仍要生成吗？';
-        if(!confirm(confirmMsg))return;
-    }
-
-    btnEncode.classList.add('loading');
-    btnEncode.classList.add('show-spinner');
-
-    setTimeout(function(){
-        var stage1;
-        if(willAttemptCompress){
-            stage1=compressBytes(rawBytes, algo).then(function(cmp){
-                if(cmp.length < rawBytes.length){
-                    return { bytes: cmp, compressed: true, algo: algo, originalSize: rawBytes.length };
-                }
-                return { bytes: rawBytes, compressed: false, algo: null, originalSize: rawBytes.length };
-            }).catch(function(){
-                return { bytes: rawBytes, compressed: false, algo: null, originalSize: rawBytes.length };
-            });
-        }else{
-            stage1=Promise.resolve({ bytes: rawBytes, compressed: false, algo: null, originalSize: rawBytes.length });
+    var compressPromise;
+    if(opts.algo==='auto'){
+      compressPromise=doCompressAuto(bytes, forceCompress).then(function(r){
+        if(r.compressFailed)return { bytes:bytes, compressed:false, compressFailed:true, failAlgo:'auto' };
+        if(r.compressed){
+          usedAlgo=r.usedAlgo;
+          return { bytes:r.bytes, compressed:true, larger:r.larger };
         }
+        return { bytes:bytes, compressed:false, noGain:r.noGain, noGainAlgo:r.noGainAlgo };
+      });
+    }else if(opts.algo){
+      compressPromise=doCompress(bytes,opts.algo).then(function(cmp){
+        if(cmp.length<bytes.length || forceCompress){
+          usedAlgo=opts.algo;
+          return { bytes:cmp, compressed:true, larger:cmp.length>=bytes.length };
+        }
+        return { bytes:bytes, compressed:false, noGain:true, noGainAlgo:opts.algo };
+      }).catch(function(err){
+        console.warn('[压缩] '+opts.algo+' 失败，回退为不压缩：', err);
+        return { bytes:bytes, compressed:false, compressFailed:true, failAlgo:opts.algo };
+      });
+    }else{
+      compressPromise=Promise.resolve({ bytes:bytes, compressed:false });
+    }
 
-        var stage2=stage1.then(function(res){
-            if(password){
-                var marker;
-                if(res.compressed){
-                    marker = (res.algo==='brotli') ? MARK_ENC_BR : MARK_ENC_GZ;
-                }else{
-                    marker = MARK_ENC;
-                }
-                return encryptBytes(res.bytes, password, marker).then(function(enc){
-                    return {
-                        bytes: enc,
-                        compressed: res.compressed,
-                        algo: res.algo,
-                        encrypted: true,
-                        originalSize: res.originalSize,
-                        compressedSize: res.bytes.length
-                    };
-                });
-            }else{
-                if(res.compressed){
-                    var plainMarker = (res.algo==='brotli') ? MARK_PLAIN_BR : MARK_PLAIN_GZ;
-                    var out=new Uint8Array(1+res.bytes.length);
-                    out[0]=plainMarker;
-                    out.set(res.bytes, 1);
-                    return {
-                        bytes: out,
-                        compressed: true,
-                        algo: res.algo,
-                        encrypted: false,
-                        originalSize: res.originalSize,
-                        compressedSize: res.bytes.length
-                    };
-                }
-                return {
-                    bytes: res.bytes,
-                    compressed: false,
-                    algo: null,
-                    encrypted: false,
-                    originalSize: res.originalSize
-                };
-            }
+    return compressPromise.then(function(cr){
+      var stage2Bytes=cr.bytes;
+      var compressed=cr.compressed;
+      var larger=cr.larger;
+      var compressedSize=cr.bytes.length;
+
+      var encPromise=Promise.resolve({ bytes:stage2Bytes, encrypted:false });
+      if(opts.password){
+        encPromise=encryptRaw(stage2Bytes, opts.password).then(function(enc){
+          return { bytes:enc, encrypted:true };
         });
+      }
 
-        stage2.then(function(result){
-            try{
-                var zwSeq=bytesToZeroWidth(result.bytes, scheme.zero, scheme.one);
-                var chars=Array.from(cleaned);
-                var finalResult='';
-                if(chars.length>0){
-                    var chunk=Math.ceil(zwSeq.length/chars.length);
-                    var segs=new Array(chars.length);
-                    for(var i=0;i<chars.length;i++){
-                        var s=i*chunk, e=Math.min(s+chunk,zwSeq.length);
-                        segs[i]=(s<zwSeq.length)?(chars[i]+zwSeq.slice(s,e)):chars[i];
-                    }
-                    finalResult=segs.join('');
-                }else{
-                    finalResult=zwSeq;
-                }
-                outEncoded.textContent=finalResult;
+      return encPromise.then(function(er){
+        var finalBytes=er.bytes;
+        var encrypted=er.encrypted;
 
-                var visibleCount=chars.length;
-                var hiddenCount=zwSeq.length;
-                var totalChars=visibleCount+hiddenCount;
+        var meta=buildMeta(opts.method, usedAlgo||'none', opts.useGBK, encrypted);
+        var out=new Uint8Array(2+finalBytes.length);
+        out[0]=MARK_V2;
+        out[1]=meta;
+        out.set(finalBytes,2);
 
-                lastEncStats={ visibleCount:visibleCount };
+        return {
+          payload:out,
+          meta:meta,
+          originalSize:originalSize,
+          compressed:compressed,
+          compressedSize:compressedSize,
+          usedAlgo:usedAlgo,
+          encrypted:encrypted,
+          larger:larger,
+          compressFailed:cr.compressFailed,
+          failAlgo:cr.failAlgo,
+          noGain:cr.noGain,
+          noGainAlgo:cr.noGainAlgo
+        };
+      });
+    });
+  });
+}
 
-                var parts=[];
-                parts.push('<span class="hl">表面可见 '+formatCount(visibleCount)+'</span>');
-                parts.push('<span class="'+(hiddenCount>500000?'warn':'')+'">隐藏字符 '+formatCount(hiddenCount)+'</span>');
-                if(result.compressed){
-                    var saved=1 - result.compressedSize/result.originalSize;
-                    var pct=Math.round(saved*100);
-                    var algoName=(result.algo==='brotli') ? 'Brotli' : 'gzip';
-                    parts.push('<span class="hl">'+algoName+' 压缩 · 省 '+pct+'%（'+formatBytes(result.originalSize)+' → '+formatBytes(result.compressedSize)+'）</span>');
-                }else if(algo){
-                    parts.push('<span>压缩后未变小，已用原文</span>');
-                }
-                if(result.encrypted){
-                    parts.push('<span class="hl">AES-GCM 已加密</span>');
-                }
-                statsEnc.innerHTML=parts.join('');
+btnEncode.addEventListener('click',function(){
+  if(btnEncode.classList.contains('loading'))return;
+  var carrier=inCarrier.value, secret=inSecret.value;
+  var password=inPasswordHide.value;
+  if(!carrier.trim()){ toast('请输入载体文本'); return; }
+  if(!secret.trim()){ toast('请输入隐藏内容'); return; }
 
-                if(totalChars>DOWNLOAD_THRESHOLD){
-                    statsEnc.innerHTML+='<span class="warn">文本较长，建议点击「下载」保存 .txt 分享</span>';
-                }
+  var secretLen=countChars(secret);
+  if(secretLen>ENCODE_CHAR_LIMIT){ toast('隐藏内容过长（上限 '+formatCount(ENCODE_CHAR_LIMIT)+'）'); return; }
+  if(password&&!cryptoAvailable){ toast('当前环境不支持加密'); return; }
 
-                btnEncode.classList.remove('loading','show-spinner');
-                expandAndScroll(resEncode);
-            }catch(err){
-                btnEncode.classList.remove('loading','show-spinner');
-                toast('处理失败：'+(err.message||'内存不足'));
-            }
-        }).catch(function(err){
-            btnEncode.classList.remove('loading','show-spinner');
-            toast('处理失败：'+(err.message||'未知错误'));
+  var cleaned=cleanText(carrier);
+  var carrierLen=countChars(cleaned);
+  if(carrierLen===0){ toast('载体文本为空'); return; }
+
+  var algo=resolveAlgoForEncode();
+  var useGBK=(textEncodingPref==='gbk');
+  var method=methodPref;
+
+  var bytesPerChar=useGBK?2:3;
+  var ratio=estimateCompressRatio(algo);
+  var estBytes=secretLen*bytesPerChar*ratio+(password?45:0);
+  var bpc=bitsPerChar(method);
+  var estChars=Math.ceil(estBytes*8/bpc)+2;
+  var perChar=estChars/carrierLen;
+
+  if(perChar>MAX_ZW_PER_CHAR){
+    var recommend=Math.ceil(estChars/MAX_ZW_PER_CHAR);
+    var confirmMsg='载体太短！\n\n隐藏内容约需 '+formatCount(estChars)+' 个隐藏字符，\n'+
+      '当前载体 '+carrierLen+' 字，每个字要挂约 '+Math.round(perChar)+' 个隐藏字符。\n\n'+
+      '建议载体至少 '+recommend+' 字。\n\n仍要生成吗？';
+    if(!confirm(confirmMsg))return;
+  }
+
+  /* 自动档按载荷大小决定是否值得加载外部库；显式选择则无条件加载指定库 */
+  var wantExternal=!!forceCompress || (secretLen*bytesPerChar>=AUTO_EXTERNAL_MIN_BYTES);
+  var wantBrotli=(algo==='brotli') || (algo==='auto' && wantExternal);
+  var wantZstd=(algo==='zstd' && !nativeSupport.zstd) || (algo==='auto' && wantExternal && !nativeSupport.zstd);
+
+  var needLibs=[];
+  if(useGBK && !externalIconv)needLibs.push('GBK');
+  if(wantBrotli && !externalBrotli)needLibs.push('Brotli');
+  if(wantZstd && !externalZstd)needLibs.push('ZSTD');
+
+  btnEncode.classList.add('loading','spin');
+  btnEncode.setAttribute('data-loading', needLibs.length?'加载 '+needLibs.join('/')+' 库…':'处理中…');
+
+  setTimeout(function(){
+    /* GBK 库加载失败保持快速失败（文本编码是正确性选择）；
+       压缩库单个失败不拖累其他库与本地算法，全部不可用时才标记失败并回退 */
+    var libLoadFailed=null;
+    var otherPreloads=[], compressPreloads=[];
+    if(useGBK && !externalIconv)otherPreloads.push(loadExternalIconv());
+    if(wantBrotli && !externalBrotli)compressPreloads.push(loadExternalBrotli());
+    if(wantZstd && !externalZstd)compressPreloads.push(loadExternalZstd());
+
+    Promise.all(otherPreloads).then(function(){
+      return Promise.all(compressPreloads.map(function(p){
+        return p.catch(function(err){
+          console.warn('[压缩] 外部库加载失败，将跳过该库：', err);
+          return null;
         });
-    }, 20);
+      }));
+    }).then(function(){
+      if(algo==='brotli' && !externalBrotli){
+        libLoadFailed=new Error('Brotli 库不可用');
+      }else if(algo==='zstd' && !nativeSupport.zstd && !externalZstd){
+        libLoadFailed=new Error('ZSTD 库不可用');
+      }else if(algo==='auto' && compressPreloads.length>0
+               && !externalBrotli && !externalZstd
+               && !nativeSupport.deflateRaw && !nativeSupport.gzip && !nativeSupport.zstd){
+        libLoadFailed=new Error('所有压缩库均不可用');
+      }
+      return encodePayload(secret, { algo:libLoadFailed?null:algo, useGBK:useGBK, method:method, password:password||null });
+    }).then(function(result){
+      if(libLoadFailed && algo){
+        result.compressFailed=true;
+        result.failAlgo=algo;
+      }
+      var payload=result.payload;
+      var scheme=SCHEMES[hideSchemeIdx];
+      var zwSeq=bytesToHiddenChars(payload, method, scheme);
+
+      var chars=Array.from(cleaned);
+      var finalResult='';
+      if(chars.length>0){
+        /* 必须按码点（而非 UTF-16 码元）切分隐藏串：极高压缩比使用的 U+E0100~U+E01EF
+           是星条平面字符、由代理对构成。按码元切片会把代理对拆成两半，而两半之间还会被
+           插入载体字符，导致该字符永久损坏、提取时静默丢失（曾造成 8-bit 方法必然失败）。 */
+        var hiddenCps=Array.from(zwSeq);
+        var chunk=Math.ceil(hiddenCps.length/chars.length);
+        var segs=new Array(chars.length);
+        for(var i=0;i<chars.length;i++){
+          var s=i*chunk, e=Math.min(s+chunk,hiddenCps.length);
+          segs[i]=(s<hiddenCps.length)?(chars[i]+hiddenCps.slice(s,e).join('')):chars[i];
+        }
+        finalResult=segs.join('');
+      }else{ finalResult=zwSeq; }
+      outEncoded.textContent=finalResult;
+
+      var visibleCount=chars.length;
+      var hiddenCount=countChars(zwSeq);
+      var totalChars=visibleCount+hiddenCount;
+      lastEncStats={ visibleCount:visibleCount };
+
+      var parts=[];
+      parts.push('<span class="stat-pill hl">可见 '+formatCount(visibleCount)+'</span>');
+      parts.push('<span class="stat-pill '+(hiddenCount>500000?'warn':'')+'">隐藏 '+formatCount(hiddenCount)+'</span>');
+      if(useGBK)parts.push('<span class="stat-pill">GBK</span>');
+      if(method==='base64')parts.push('<span class="stat-pill hl">Base64 · 6-bit</span>');
+      else if(method==='highdensity')parts.push('<span class="stat-pill purple">4-bit</span>');
+      else if(method==='extreme')parts.push('<span class="stat-pill gold">8-bit</span>');
+      if(result.compressed){
+        var algoName=(compressPref==='auto'?'自动选出 ':'')+algoDisplayName(result.usedAlgo);
+        var libTag=(result.usedAlgo==='brotli'||result.usedAlgo==='zstd')?'（外部库）':'';
+        var saved=1-result.compressedSize/result.originalSize;
+        var pct=Math.round(saved*100);
+        var pctTxt=(saved>=0)?('省 '+pct+'%'):('增 '+Math.abs(pct)+'%');
+        var cls=(saved>=0)?'hl':'warn';
+        parts.push('<span class="stat-pill '+cls+'">'+algoName+libTag+' · '+pctTxt+' · '+formatBytes(result.originalSize)+' → '+formatBytes(result.compressedSize)+'</span>');
+      }else if(result.noGain){
+        parts.push('<span class="stat-pill warn">'+algoDisplayName(result.noGainAlgo)+' 压缩后未变小，已用原文</span>');
+      }else if(compressPref==='none'){
+        parts.push('<span class="stat-pill gray">未压缩</span>');
+      }
+      if(result.encrypted)parts.push('<span class="stat-pill hl">AES-GCM 已加密</span>');
+      if(result.compressFailed){
+        parts.push('<span class="stat-pill warn">'+algoDisplayName(result.failAlgo)+' 压缩失败 · 已按原文嵌入</span>');
+      }
+      statsEnc.innerHTML=parts.join('');
+
+      if(result.compressFailed){
+        toast(algoDisplayName(result.failAlgo)+' 压缩失败（外部库加载或调用异常），已回退为不压缩');
+      }
+
+      if(totalChars>DOWNLOAD_THRESHOLD){
+        statsEnc.innerHTML+='<span class="stat-pill warn">文本较长，建议点击「下载」保存 .txt 分享</span>';
+      }
+
+      btnEncode.classList.remove('loading','spin');
+      updateCompressHint();
+      expandAndScroll(resEncode);
+    }).catch(function(err){
+      btnEncode.classList.remove('loading','spin');
+      updateCompressHint();
+      toast('处理失败：'+(err.message||'未知错误'));
+    });
+  }, 20);
 });
 
 var copyTimer=null;
 btnCopyEnc.addEventListener('click',function(){
-    var text=outEncoded.textContent;
-    if(!text)return;
-    copyText(text).then(function(ok){
-        if(ok){
-            toast('已复制到剪贴板');
-            btnCopyEnc.classList.add('done');
-            copyLabel.textContent='已复制';
-            clearTimeout(copyTimer);
-            copyTimer=setTimeout(function(){
-                btnCopyEnc.classList.remove('done');
-                copyLabel.textContent='复制';
-            },1600);
-        }else{
-            toast('复制失败，请点击「下载」或长按文本手动复制');
-        }
-    });
+  var text=outEncoded.textContent;
+  if(!text)return;
+  copyText(text).then(function(ok){
+    if(ok){
+      toast('已复制到剪贴板');
+      btnCopyEnc.classList.add('done'); copyLabel.textContent='已复制';
+      clearTimeout(copyTimer);
+      copyTimer=setTimeout(function(){ btnCopyEnc.classList.remove('done'); copyLabel.textContent='复制'; },1600);
+    }else{
+      toast('复制失败，请点击「下载」或长按文本手动复制');
+    }
+  });
 });
-
 var downloadTimer=null;
 btnDownload.addEventListener('click',function(){
-    var text=outEncoded.textContent;
-    if(!text){ toast('暂无可下载的内容'); return; }
-    try{
-        var filename=buildDownloadFilename(lastEncStats.visibleCount);
-        var blob=new Blob([text], { type:'text/plain;charset=utf-8' });
-        var url=URL.createObjectURL(blob);
-        var a=document.createElement('a');
-        a.href=url;
-        a.download=filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-
-        btnDownload.classList.add('done');
-        clearTimeout(downloadTimer);
-        downloadTimer=setTimeout(function(){
-            btnDownload.classList.remove('done');
-        }, 1500);
-
-        toast('已开始下载 · '+formatBytes(blob.size));
-    }catch(e){
-        toast('下载失败，请复制文本手动保存');
-    }
+  var text=outEncoded.textContent;
+  if(!text){ toast('暂无可下载的内容'); return; }
+  try{
+    var filename=buildDownloadFilename(lastEncStats.visibleCount);
+    var blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download=filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+    btnDownload.classList.add('done');
+    clearTimeout(downloadTimer);
+    downloadTimer=setTimeout(function(){ btnDownload.classList.remove('done'); },1500);
+    toast('已开始下载 · '+formatBytes(blob.size));
+  }catch(e){ toast('下载失败，请复制文本手动保存'); }
 });
 
-/* ══════════ 提取 ══════════ */
 var decResultText='';
 var copyDecTimer=null;
-
 function resetDecodeCopyBtn(){
-    btnCopyDec.style.display='none';
-    btnCopyDec.classList.remove('done');
-    copyDecLabel.textContent='复制';
-    decResultText='';
+  btnCopyDec.style.display='none'; btnCopyDec.classList.remove('done');
+  copyDecLabel.textContent='复制'; decResultText='';
 }
-
 btnCopyDec.addEventListener('click',function(){
-    if(!decResultText)return;
-    copyText(decResultText).then(function(ok){
-        if(ok){
-            toast('已复制到剪贴板');
-            btnCopyDec.classList.add('done');
-            copyDecLabel.textContent='已复制';
-            clearTimeout(copyDecTimer);
-            copyDecTimer=setTimeout(function(){
-                btnCopyDec.classList.remove('done');
-                copyDecLabel.textContent='复制';
-            },1600);
-        }else{
-            toast('复制失败，请长按文本手动复制');
-        }
-    });
+  if(!decResultText)return;
+  copyText(decResultText).then(function(ok){
+    if(ok){
+      toast('已复制到剪贴板');
+      btnCopyDec.classList.add('done'); copyDecLabel.textContent='已复制';
+      clearTimeout(copyDecTimer);
+      copyDecTimer=setTimeout(function(){ btnCopyDec.classList.remove('done'); copyDecLabel.textContent='复制'; },1600);
+    }else{ toast('复制失败，请长按文本手动复制'); }
+  });
 });
-
 function renderStatus(tone,message){
-    var icon=(tone==='ok')?'✓':'!';
-    outDecoded.innerHTML='<div class="status-card tone-'+tone+'">'+
-        '<span class="status-icon">'+icon+'</span>'+
-        '<span class="status-text">'+message+'</span>'+
-    '</div>';
+  var icon=(tone==='ok')?'✓':'!';
+  outDecoded.innerHTML='<div class="status-card '+tone+'"><span class="status-icon">'+icon+'</span><span class="status-text">'+message+'</span></div>';
 }
-function renderSuccess(text,scheme,encrypted,compressed,algoName){
-    var html='<div class="extracted">'+escapeHtml(text)+'</div>';
-    if(scheme){
-        var extra='';
-        if(encrypted&&compressed)extra=' · <strong>AES-GCM 已解密</strong> · <strong>'+algoName+' 已解压</strong>';
-        else if(encrypted)extra=' · <strong>AES-GCM 已解密</strong>';
-        else if(compressed)extra=' · <strong>'+algoName+' 已解压</strong>';
-        html+='<div class="scheme-found">匹配方案：<strong>'+escapeHtml(scheme.name)+
-            '</strong>（'+escapeHtml(scheme.desc)+'）'+extra+
-        '</div>';
-    }
-    outDecoded.innerHTML=html;
-    decResultText=text;
-    btnCopyDec.style.display='inline-flex';
+function renderSuccess(text,extraNote,encrypted,compressed,algoName,libTag){
+  var html='<div class="extracted">'+escapeHtml(text)+'</div>';
+  var parts=[];
+  if(extraNote)parts.push(extraNote);
+  if(encrypted&&compressed)parts.push('<strong>AES-GCM 已解密</strong> · <strong>'+algoName+(libTag||'')+' 已解压</strong>');
+  else if(encrypted)parts.push('<strong>AES-GCM 已解密</strong>');
+  else if(compressed)parts.push('<strong>'+algoName+(libTag||'')+' 已解压</strong>');
+  if(parts.length)html+='<div class="scheme-note">'+parts.join(' · ')+'</div>';
+  outDecoded.innerHTML=html;
+  decResultText=text;
+  btnCopyDec.style.display='inline-flex';
 }
 
-function tryDecodeBytes(bytes,password){
-    if(!bytes||bytes.length===0)return Promise.resolve(null);
-    var first=bytes[0];
+function decodePayload(payload, info, password){
+  var decryptP=Promise.resolve(payload);
+  if(info.encrypted){
+    if(!password)return Promise.resolve({type:'encrypted'});
+    decryptP=decryptRaw(payload,password);
+  }
 
-    if(first===MARK_ENC_BR){
-        if(!password)return Promise.resolve({type:'encrypted'});
-        return decryptBytes(bytes.slice(1), password).then(function(plainBytes){
-            if(!plainBytes)return {type:'wrong-password'};
-            return decompressBytes(plainBytes, 'brotli').then(function(rawBytes){
-                var text=tryDecodeUtf8(rawBytes);
-                if(text&&looksLikeText(text)){
-                    return {type:'plain', text:text, encrypted:true, compressed:true, algoName:'Brotli'};
-                }
-                return {type:'wrong-password'};
-            }).catch(function(){
-                return {type:'wrong-password'};
-            });
-        });
-    }
+  return decryptP.then(function(dec){
+    if(dec===null)return {type:'wrong-password'};
+    if(info.compression==='none')return { bytes:dec, encrypted:info.encrypted };
+    return doDecompress(dec,info.compression).then(function(raw){
+      return { bytes:raw, encrypted:info.encrypted };
+    }).catch(function(){ return {type:'decompress-failed'}; });
+  }).then(function(r){
+    if(r.type)return r;
+    var bytes=r.bytes;
+    var compTag;
+    if(info.compression==='none')compTag='<span style="color:var(--fg-secondary)">未压缩</span>';
+    else compTag='<span style="color:var(--blue)">'+algoDisplayName(info.compression)+'</span>';
 
-    if(first===MARK_ENC_GZ){
-        if(!password)return Promise.resolve({type:'encrypted'});
-        return decryptBytes(bytes.slice(1), password).then(function(plainBytes){
-            if(!plainBytes)return {type:'wrong-password'};
-            return decompressBytes(plainBytes, 'gzip').then(function(rawBytes){
-                var text=tryDecodeUtf8(rawBytes);
-                if(text&&looksLikeText(text)){
-                    return {type:'plain', text:text, encrypted:true, compressed:true, algoName:'gzip'};
-                }
-                return {type:'wrong-password'};
-            }).catch(function(){
-                return {type:'wrong-password'};
-            });
-        });
+    if(info.gbk){
+      return gbkDecode(bytes).then(function(text){
+        if(text && looksLikeText(text)){
+          return {
+            type:'plain', text:text,
+            encrypted:info.encrypted,
+            compressed:info.compression!=='none',
+            algoName:algoDisplayName(info.compression),
+            extraNote:'文本编码 <strong>GBK</strong> · '+compTag
+          };
+        }
+        return {type:'wrong-password'};
+      });
+    }else{
+      var text=tryDecodeUtf8(bytes);
+      if(text && looksLikeText(text)){
+        return {
+          type:'plain', text:text,
+          encrypted:info.encrypted,
+          compressed:info.compression!=='none',
+          algoName:algoDisplayName(info.compression),
+          extraNote:compTag
+        };
+      }
+      return {type:'wrong-password'};
     }
+  });
+}
 
-    if(first===MARK_ENC){
-        if(!password)return Promise.resolve({type:'encrypted'});
-        return decryptBytes(bytes.slice(1), password).then(function(plainBytes){
-            if(!plainBytes)return {type:'wrong-password'};
-            var text=tryDecodeUtf8(plainBytes);
-            if(text&&looksLikeText(text)){
-                return {type:'plain', text:text, encrypted:true, compressed:false};
-            }
-            return {type:'wrong-password'};
-        });
-    }
+function tryDecodeV1(bytes, password){
+  if(!bytes||bytes.length===0)return Promise.resolve(null);
+  var first=bytes[0];
 
-    if(first===MARK_PLAIN_BR){
-        if(!compressionSupport.brotli)return Promise.resolve(null);
-        return decompressBytes(bytes.slice(1), 'brotli').then(function(rawBytes){
-            var text=tryDecodeUtf8(rawBytes);
-            if(text&&looksLikeText(text)){
-                return {type:'plain', text:text, encrypted:false, compressed:true, algoName:'Brotli'};
-            }
-            return null;
-        }).catch(function(){ return null; });
-    }
+  function handleEncrypted(algo){
+    if(!password)return Promise.resolve({type:'encrypted'});
+    return decryptRaw(bytes.slice(1), password).then(function(plainBytes){
+      if(!plainBytes)return {type:'wrong-password'};
+      if(algo){
+        return doDecompress(plainBytes, algo).then(function(raw){
+          var text=tryDecodeUtf8(raw);
+          if(text && looksLikeText(text)){
+            return {type:'plain', text:text, encrypted:true, compressed:true, algoName:algoDisplayName(algo), extraNote:'旧格式'};
+          }
+          return {type:'wrong-password'};
+        }).catch(function(){ return {type:'decompress-failed'}; });
+      }else{
+        var text=tryDecodeUtf8(plainBytes);
+        if(text && looksLikeText(text)){
+          return {type:'plain', text:text, encrypted:true, compressed:false, extraNote:'旧格式'};
+        }
+        return {type:'wrong-password'};
+      }
+    });
+  }
 
-    if(first===MARK_PLAIN_GZ){
-        if(!compressionSupport.gzip)return Promise.resolve(null);
-        return decompressBytes(bytes.slice(1), 'gzip').then(function(rawBytes){
-            var text=tryDecodeUtf8(rawBytes);
-            if(text&&looksLikeText(text)){
-                return {type:'plain', text:text, encrypted:false, compressed:true, algoName:'gzip'};
-            }
-            return null;
-        }).catch(function(){ return null; });
-    }
+  if(first===MARK_ENC_BR)return handleEncrypted('brotli');
+  if(first===MARK_ENC_GZ)return handleEncrypted('gzip');
+  if(first===MARK_ENC_ZS)return handleEncrypted('zstd');
+  if(first===MARK_ENC)return handleEncrypted(null);
+  if(first===MARK_PLAIN_BR || first===MARK_PLAIN_GZ || first===MARK_PLAIN_ZS){
+    var algo2=(first===MARK_PLAIN_BR)?'brotli':(first===MARK_PLAIN_ZS)?'zstd':'gzip';
+    return doDecompress(bytes.slice(1), algo2).then(function(raw){
+      var text=tryDecodeUtf8(raw);
+      if(text && looksLikeText(text)){
+        return {type:'plain', text:text, encrypted:false, compressed:true, algoName:algoDisplayName(algo2), extraNote:'旧格式'};
+      }
+      return null;
+    }).catch(function(){ return null; });
+  }
+  var text=tryDecodeUtf8(bytes);
+  if(text && looksLikeText(text)){
+    return Promise.resolve({type:'plain', text:text, encrypted:false, compressed:false, extraNote:'旧格式'});
+  }
+  return Promise.resolve(null);
+}
 
-    var text=tryDecodeUtf8(bytes);
-    if(text&&looksLikeText(text)){
-        return Promise.resolve({type:'plain', text:text, encrypted:false, compressed:false});
-    }
-    return Promise.resolve(null);
+function tryDecodeWith(text, method, scheme, password){
+  var bytes=hiddenCharsToBytes(text, method, scheme);
+  if(!bytes||bytes.length===0)return Promise.resolve(null);
+
+  if(bytes[0]===MARK_V2 && bytes.length>=2){
+    var info=parseMeta(bytes[1]);
+    if(info.method!==method)return Promise.resolve(null);
+    return decodePayload(bytes.slice(2), info, password);
+  }
+  if(method!=='standard')return Promise.resolve(null);
+  return tryDecodeV1(bytes, password);
 }
 
 btnDecode.addEventListener('click',function(){
-    if(btnDecode.classList.contains('loading'))return;
-    var paste=inPaste.value;
-    var password=inPasswordExtract.value;
-    if(!paste){ toast('请粘贴文本'); return; }
+  if(btnDecode.classList.contains('loading'))return;
+  var paste=inPaste.value;
+  var password=inPasswordExtract.value;
+  if(!paste){ toast('请粘贴文本'); return; }
 
-    var sel=EXTRACT_OPTIONS[extractSchemeIdx];
-    var candidates=[];
+  btnDecode.classList.add('loading','spin');
+  btnDecode.setAttribute('data-loading','处理中…');
+  resetDecodeCopyBtn();
+
+  var cps=Array.from(paste);
+  var countExtremeOnly=0, countFe00Fe07=0, countFe08Fe0f=0, countLow=0, countStandard=0;
+  for(var i=0;i<cps.length;i++){
+    var ch=cps[i];
+    if(isExtremeExclusiveChar(ch))countExtremeOnly++;
+    else if(isHexChar(ch)){
+      var cp=ch.codePointAt(0);
+      if(cp>=0xFE08)countFe08Fe0f++;
+      else countFe00Fe07++;
+    }
+    else if(isBase64LowChar(ch))countLow++;
+    else if(ZW_ALL_SET.has(ch))countStandard++;
+  }
+
+  var hasFe = (countFe00Fe07 + countFe08Fe0f) > 0;
+
+  var candidates=[];
+  var sel=EXTRACT_OPTIONS[extractSchemeIdx];
+
+  if(countExtremeOnly > 0){
+    candidates.push({method:'extreme', scheme:null});
+  }
+  if(hasFe){
+    candidates.push({method:'highdensity', scheme:null});
+  }
+  if(countLow > 0 && countFe00Fe07 > 0){
+    candidates.push({method:'base64', scheme:null});
+  }
+  if(countExtremeOnly === 0 && hasFe && countFe08Fe0f === 0 && countFe00Fe07 > 0 && countLow === 0){
+    candidates.push({method:'extreme', scheme:null});
+  }
+  /* 注意：变体方案用 U+FE00/FE01，在上面计数时会被 isHexChar 分支计入 countFe00Fe07
+     而不是 countStandard；若只判断 countStandard，默认的变体方案在自动检测（以及
+     手动指定标准方案）时会被整段跳过，导致「发现隐藏字符，但无法解析为有效内容」。
+     因此只要存在 FE00~FE07 字符，就必须把标准方案的各字符集加入候选。 */
+  if(countStandard > 0 || countFe00Fe07 > 0 || candidates.length === 0){
     if(sel.id==='auto'){
-        candidates=SCHEMES.slice().sort(function(a,b){
-            return (a.id==='microdot'?1:0)-(b.id==='microdot'?1:0);
-        });
+      var ordered=SCHEMES.slice().sort(function(a,b){
+        return (a.id==='microdot'?1:0)-(b.id==='microdot'?1:0);
+      });
+      ordered.forEach(function(s){ candidates.push({method:'standard', scheme:s}); });
     }else{
-        candidates=[sel];
+      candidates.push({method:'standard', scheme:sel});
     }
+  }
 
-    btnDecode.classList.add('loading');
-    resetDecodeCopyBtn();
+  var idx=0, sawEncrypted=false, sawWrongPassword=false, sawDecompressFailed=false, foundAnyChars=false, done=false;
 
-    var idx=0;
-    var sawEncrypted=false;
-    var sawWrongPassword=false;
-    var foundAnyZw=false;
-    var done=false;
-
-    function tryNext(){
-        if(done)return;
-        if(idx>=candidates.length){
-            done=true;
-            btnDecode.classList.remove('loading');
-            if(sawEncrypted){
-                renderStatus('warn',
-                    '<strong>检测到已加密内容</strong>，请在上方输入密码后重试');
-            }else if(sawWrongPassword){
-                renderStatus('error',
-                    '<strong>密码错误</strong>，无法解密。请检查密码是否正确');
-            }else if(foundAnyZw){
-                renderStatus('error','发现隐藏字符，但无法解析为有效内容');
-            }else{
-                renderStatus('error','未发现有效的隐藏内容');
-            }
-            expandAndScroll(resDecode);
-            return;
-        }
-        var scheme=candidates[idx++];
-        var zw=extractZw(paste, scheme);
-        if(!zw||zw.length===0||zw.length%8!==0){ tryNext(); return; }
-        foundAnyZw=true;
-        var bytes=zeroWidthToBytes(zw, scheme.zero, scheme.one);
-        if(!bytes){ tryNext(); return; }
-        tryDecodeBytes(bytes, password).then(function(res){
-            if(done)return;
-            if(res&&res.type==='plain'){
-                done=true;
-                btnDecode.classList.remove('loading');
-                renderSuccess(res.text, scheme, res.encrypted, res.compressed, res.algoName);
-                expandAndScroll(resDecode);
-                return;
-            }
-            if(res&&res.type==='encrypted')sawEncrypted=true;
-            if(res&&res.type==='wrong-password')sawWrongPassword=true;
-            tryNext();
-        }).catch(function(){ tryNext(); });
+  function tryNext(){
+    if(done)return;
+    if(idx>=candidates.length){
+      done=true;
+      btnDecode.classList.remove('loading','spin');
+      if(sawEncrypted){
+        renderStatus('warn','<strong>检测到已加密内容</strong>，请在上方输入密码后重试');
+      }else if(sawDecompressFailed){
+        renderStatus('error','<strong>解压失败</strong>：压缩库可能未能加载（请检查网络后重试），或内容已损坏');
+      }else if(sawWrongPassword){
+        renderStatus('error','<strong>密码错误</strong>，无法解密。请检查密码是否正确');
+      }else if(foundAnyChars){
+        renderStatus('error','发现隐藏字符，但无法解析为有效内容');
+      }else{
+        renderStatus('error','未发现有效的隐藏内容');
+      }
+      expandAndScroll(resDecode);
+      return;
     }
-    tryNext();
+    var cand=candidates[idx++];
+    foundAnyChars=true;
+
+    tryDecodeWith(paste, cand.method, cand.scheme, password).then(function(res){
+      if(done)return;
+      if(res && res.type==='plain'){
+        done=true;
+        btnDecode.classList.remove('loading','spin');
+        var methodName, methodDesc;
+        if(cand.method==='extreme'){ methodName='极高压缩比（8 bit/字符）'; methodDesc='U+FE00~FE0F + U+E0100~E01EF'; }
+        else if(cand.method==='highdensity'){ methodName='高压缩比（4 bit/字符）'; methodDesc='U+FE00 ~ U+FE0F'; }
+        else if(cand.method==='base64'){ methodName='Base64（6 bit/字符对）'; methodDesc='U+200B~U+2064 × U+FE00~FE07'; }
+        else { methodName=cand.scheme.name; methodDesc=cand.scheme.desc; }
+        var head='匹配方法：<strong>'+methodName+'</strong>（'+methodDesc+'）';
+        var full=res.extraNote?head+' · '+res.extraNote:head;
+        renderSuccess(res.text, full, res.encrypted, res.compressed, res.algoName, res.libTag);
+        expandAndScroll(resDecode);
+        return;
+      }
+      if(res && res.type==='encrypted')sawEncrypted=true;
+      if(res && res.type==='wrong-password')sawWrongPassword=true;
+      if(res && res.type==='decompress-failed')sawDecompressFailed=true;
+      tryNext();
+    }).catch(function(){ tryNext(); });
+  }
+  tryNext();
 });
 
-/* ══════════ 检测 ══════════ */
 var lastDetectReport='';
-
 btnDetect.addEventListener('click',function(){
-    var text=inDetect.value;
-    if(!text){ toast('请输入文本'); return; }
+  var text=inDetect.value;
+  if(!text){ toast('请输入文本'); return; }
 
-    var counts={};
-    ZW_TYPES.forEach(function(t){ counts[t.code]=0; });
+  var counts={};
+  ZW_TYPES.forEach(function(t){ counts[t.code]=0; });
+  var total=0, visible=0;
+  var vizSegments=[], truncated=false, truncTarget=VIZ_LIMIT;
+  var countExtreme=0, countHexExt=0, countHex=0, countBase64Low=0;
 
-    var total=0, visible=0;
-    var vizSegments=[];
-    var truncated=false;
-    var truncTarget=VIZ_LIMIT;
+  for(var ch of text){
+    total++;
+    if(isExtremeExclusiveChar(ch))countExtreme++;
+    else if(isHexChar(ch)){
+      countHex++;
+      var cp=ch.codePointAt(0);
+      if(cp>=0xFE08)countHexExt++;
+    }else if(isBase64LowChar(ch))countBase64Low++;
 
-    for(var ch of text){
-        total++;
-        if(total<=truncTarget){
-            var info=ZW_MAP[ch];
-            if(info){
-                counts[info.code]++;
-                vizSegments.push({type:'zw',info:info});
-            }else{
-                visible++;
-                vizSegments.push({type:'char',value:ch});
-            }
-        }else{
-            if(!truncated)truncated=true;
-            var info2=ZW_MAP[ch];
-            if(info2)counts[info2.code]++;
-            else visible++;
-        }
-    }
-    var hidden=total-visible;
-
-    animateNum(statTotal,total);
-    animateNum(statVisible,visible);
-    animateNum(statHidden,hidden);
-    statHidden.classList.toggle('hl',hidden>0);
-
-    var tlHtml='', hasAny=false, tagIdx=0;
-    var reportLines=['文字隐写检测报告','总字符：'+total,'可见字符：'+visible,'隐藏字符：'+hidden,'','隐藏字符明细：'];
-    ZW_TYPES.forEach(function(t){
-        var c=counts[t.code];
-        if(c>0){
-            hasAny=true;
-            tlHtml+='<div class="tag" style="animation-delay:'+(tagIdx*0.06)+'s">'+
-                '<span class="tag-dot" style="background:'+t.color+';color:'+t.color+'"></span>'+
-                '<span class="tag-name">'+escapeHtml(t.name)+'</span>'+
-                '<span class="tag-code">'+t.code+'</span>'+
-                '<span class="tag-count">&times;'+c+'</span></div>';
-            reportLines.push('· '+t.name+' ('+t.code+') × '+c);
-            tagIdx++;
-        }
-    });
-    typeList.innerHTML=hasAny?tlHtml:'<span class="tags-empty">未检测到隐藏字符</span>';
-
-    if(!hasAny){
-        vizText.innerHTML='<span class="viz-empty">文本中不包含隐藏字符</span>';
+    if(total<=truncTarget){
+      var info=ZW_MAP[ch];
+      if(info){ counts[info.code]++; vizSegments.push({type:'zw',info:info}); }
+      else{ visible++; vizSegments.push({type:'char',value:ch}); }
     }else{
-        var vHtml='', zwIdx=0;
-        for(var j=0;j<vizSegments.length;j++){
-            var seg=vizSegments[j];
-            if(seg.type==='char'){
-                vHtml+=escapeHtml(seg.value);
-            }else{
-                var ti=seg.info;
-                vHtml+='<span class="zw" style="background:'+ti.color+'24;color:'+ti.color+
-                    ';animation-delay:'+Math.min(zwIdx*0.02,0.8)+'s">'+ti.code+'</span>';
-                zwIdx++;
-            }
-        }
-        if(truncated){
-            vHtml+='<span class="viz-more">… 内容过长，仅显示前 '+VIZ_LIMIT+' 个字符</span>';
-        }
-        vizText.innerHTML=vHtml;
+      if(!truncated)truncated=true;
+      var info2=ZW_MAP[ch];
+      if(info2)counts[info2.code]++; else visible++;
     }
+  }
+  var hidden=total-visible;
 
-    lastDetectReport=reportLines.join('\n');
-    btnCopyReport.style.display=hasAny?'inline-flex':'none';
+  animateNum(statTotal,total); animateNum(statVisible,visible); animateNum(statHidden,hidden);
+  statHidden.classList.toggle('hl',hidden>0);
 
-    expandAndScroll(resDetect);
+  var tlHtml='', hasAny=false, tagIdx=0;
+  var reportLines=['文字隐写检测报告','总字符：'+total,'可见字符：'+visible,'隐藏字符：'+hidden,'','隐藏字符明细：'];
+  ZW_TYPES.forEach(function(t){
+    var c=counts[t.code];
+    if(c>0){
+      hasAny=true;
+      tlHtml+='<div class="tag" style="animation-delay:'+(tagIdx*0.06)+'s">'+
+        '<span class="tag-dot" style="background:'+t.color+'"></span>'+
+        '<span class="tag-name">'+escapeHtml(t.name)+'</span>'+
+        '<span class="tag-code">'+t.code+'</span>'+
+        '<span class="tag-count">×'+c+'</span></div>';
+      reportLines.push('· '+t.name+' ('+t.code+') × '+c);
+      tagIdx++;
+    }
+  });
+
+  if(countHex > 0){
+    hasAny=true;
+    tlHtml+='<div class="tag" style="background:rgba(175,82,222,.14)">'+
+      '<span class="tag-dot" style="background:#AF52DE"></span>'+
+      '<span class="tag-name" style="color:#AF52DE">高压缩比（4 bit）字符</span>'+
+      '<span class="tag-code">U+FE00~FE0F</span>'+
+      '<span class="tag-count">×'+countHex+'</span></div>';
+    reportLines.push('· 高压缩比（4 bit）字符 × '+countHex);
+  }
+  if(countExtreme > 0){
+    hasAny=true;
+    tlHtml+='<div class="tag" style="background:rgba(255,149,0,.14)">'+
+      '<span class="tag-dot" style="background:#FF9500"></span>'+
+      '<span class="tag-name" style="color:#FF9500">极高压缩比（8 bit）字符</span>'+
+      '<span class="tag-code">U+E0100~E01EF</span>'+
+      '<span class="tag-count">×'+countExtreme+'</span></div>';
+    reportLines.push('· 极高压缩比（8 bit）字符 × '+countExtreme);
+  }
+  if(countBase64Low > 0 && countHex > 0 && countExtreme === 0){
+    tlHtml+='<div class="tag" style="background:var(--blue-light)">'+
+      '<span class="tag-dot" style="background:#0A84FF"></span>'+
+      '<span class="tag-name" style="color:#0A84FF">可能为 Base64（6 bit/字符对）</span>'+
+      '<span class="tag-code">LOW×'+countBase64Low+' HIGH×'+Math.min(countHex,countBase64Low)+'</span>'+
+      '</div>';
+    reportLines.push('','可能为 Base64 方法（低位 '+countBase64Low+' 个 + 高位 '+Math.min(countHex,countBase64Low)+' 个）');
+  }
+
+  typeList.innerHTML=hasAny?tlHtml:'<span class="tags-empty">未检测到隐藏字符</span>';
+
+  if(!hasAny){
+    vizText.innerHTML='<span class="viz-empty">文本中不包含隐藏字符</span>';
+  }else{
+    var vHtml='', zwIdx=0;
+    for(var j=0;j<vizSegments.length;j++){
+      var seg=vizSegments[j];
+      if(seg.type==='char')vHtml+=escapeHtml(seg.value);
+      else{
+        var ti=seg.info;
+        vHtml+='<span class="zw-chip" style="background:'+ti.color+'20;color:'+ti.color+
+          ';animation-delay:'+Math.min(zwIdx*0.02,0.8)+'s">'+ti.code+'</span>';
+        zwIdx++;
+      }
+    }
+    if(truncated)vHtml+='<span class="viz-more">… 内容过长，仅显示前 '+VIZ_LIMIT+' 个字符</span>';
+    vizText.innerHTML=vHtml;
+  }
+
+  lastDetectReport=reportLines.join('\n');
+  btnCopyReport.style.display=hasAny?'inline-flex':'none';
+  expandAndScroll(resDetect);
 });
 
 btnCopyReport.addEventListener('click',function(){
-    if(!lastDetectReport)return;
-    copyText(lastDetectReport).then(function(ok){
-        if(ok)toast('检测报告已复制');
-        else toast('复制失败，请长按报告手动复制');
-    });
+  if(!lastDetectReport)return;
+  copyText(lastDetectReport).then(function(ok){
+    if(ok)toast('检测报告已复制');
+    else toast('复制失败，请长按报告手动复制');
+  });
 });
 
 function animateNum(el,target){
-    var start=parseInt(el.textContent,10)||0;
-    if(start===target)return;
-    var dur=380,t0=null;
-    function step(ts){
-        if(!t0)t0=ts;
-        var p=Math.min((ts-t0)/dur,1);
-        var eased=1-Math.pow(1-p,3);
-        el.textContent=Math.round(start+(target-start)*eased);
-        if(p<1)requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
+  var start=parseInt(el.textContent,10)||0;
+  if(start===target)return;
+  var dur=380,t0=null;
+  function step(ts){
+    if(!t0)t0=ts;
+    var p=Math.min((ts-t0)/dur,1);
+    var eased=1-Math.pow(1-p,3);
+    el.textContent=Math.round(start+(target-start)*eased);
+    if(p<1)requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
-/* ══════════ 回到顶部 ══════════ */
 var topBtnVisible=false;
 function updateTopBtn(){
-    var show=window.pageYOffset>400;
-    if(show!==topBtnVisible){
-        topBtnVisible=show;
-        btnTop.classList.toggle('visible',show);
-    }
+  var show=window.pageYOffset>400;
+  if(show!==topBtnVisible){ topBtnVisible=show; btnTop.classList.toggle('visible',show); }
 }
-window.addEventListener('scroll',updateTopBtn,{ passive:true });
+window.addEventListener('scroll',updateTopBtn,{passive:true});
 btnTop.addEventListener('click',function(){
-    try{ window.scrollTo({ top:0, behavior:'smooth' }); }
-    catch(e){ window.scrollTo(0,0); }
+  try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); }
 });
 
-/* ══════════ 键盘快捷键 ══════════ */
 document.addEventListener('keydown',function(e){
-    if(e.isComposing)return;
-    if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){
-        var active=document.querySelector('.panel.active');
-        if(!active)return;
-        e.preventDefault();
-        if(active.id==='pHide')btnEncode.click();
-        else if(active.id==='pExtract')btnDecode.click();
-        else if(active.id==='pDetect')btnDetect.click();
-    }
+  if(e.isComposing)return;
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){
+    var active=document.querySelector('.panel.active');
+    if(!active)return;
+    e.preventDefault();
+    if(active.id==='pHide')btnEncode.click();
+    else if(active.id==='pExtract')btnDecode.click();
+    else if(active.id==='pDetect')btnDetect.click();
+  }
 });
+inPasswordHide.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){ e.preventDefault(); btnEncode.click(); }
+});
+inPasswordExtract.addEventListener('keydown',function(e){
+  if(e.key==='Enter'){ e.preventDefault(); btnDecode.click(); }
+});
+
+if(methodPref!=='standard'){
+  $('rowSchemeHide').classList.add('disabled');
+}
+
+document.body.style.paddingBottom='env(safe-area-inset-bottom)';
 
 })();
 </script>
